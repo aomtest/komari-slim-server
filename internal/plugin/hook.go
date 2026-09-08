@@ -392,9 +392,22 @@ func headerToMap(header http.Header) map[string]any {
 	return out
 }
 
+// isUpgradeRequest reports whether r is a protocol-upgrade request. A genuine
+// upgrade carries BOTH headers: Connection lists the upgrade token and Upgrade
+// names the target protocol (RFC 9110 §7.8). A bare Connection: upgrade header
+// — which some reverse-proxy templates inject into every proxied request — is
+// not an upgrade; treating it as one would skip plugin HTML injection and
+// request/response hooks for all page requests behind such a proxy.
 func isUpgradeRequest(r *http.Request) bool {
-	return strings.EqualFold(strings.TrimSpace(r.Header.Get("Connection")), "upgrade") ||
-		strings.EqualFold(r.Header.Get("Upgrade"), "websocket")
+	if r.Header.Get("Upgrade") == "" {
+		return false
+	}
+	for _, token := range strings.Split(r.Header.Get("Connection"), ",") {
+		if strings.EqualFold(strings.TrimSpace(token), "upgrade") {
+			return true
+		}
+	}
+	return false
 }
 
 // bufferedResponseWriter captures status/headers/body so response hooks can
