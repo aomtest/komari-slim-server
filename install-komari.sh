@@ -56,8 +56,7 @@ BACKUP_DIR="$INSTALL_DIR/backup"
 DATA_BACKUP_DIR="$DATA_DIR/data/backup"
 DEFAULT_PORT="25774"
 LISTEN_PORT=""
-STANDARD_REPO="komari-monitor/komari"
-LITE_REPO="nuomiiiii/komari"
+STANDARD_REPO="aomtest/komari-slim"
 REPO="$STANDARD_REPO"
 # 发行版本: standard（标准版）或 lite（Lite 轻量版）
 EDITION="standard"
@@ -155,17 +154,9 @@ msg() {
             en_text='Standard edition'
             zh_text='标准版本'
             ;;
-        edition_lite)
-            en_text='Lite edition - optimized for low-resource controllers with a streamlined feature set (maintained by @nuomiiiii)'
-            zh_text='Lite 版本 - 改善低配置主控下的性能，精简复杂功能（由 @nuomiiiii 维护）'
-            ;;
         edition_name_standard)
             en_text='Komari Standard'
             zh_text='Komari 标准版'
-            ;;
-        edition_name_lite)
-            en_text='Komari Lite'
-            zh_text='Komari Lite 轻量版'
             ;;
         selected_edition)
             en_text='Selected edition: %s'
@@ -202,10 +193,6 @@ msg() {
         progress_edition_standard)
             en_text='Standard edition'
             zh_text='标准版'
-            ;;
-        progress_edition_lite)
-            en_text='Lite edition'
-            zh_text='Lite 版本'
             ;;
         progress_download)
             en_text='Download Komari'
@@ -779,48 +766,18 @@ ASCII_ART
 
 
 # 设置发行版本，结果写入全局变量 EDITION / REPO。
+# 本项目仅维护标准版，直接固定为 standard。
 select_edition() {
-    local choice
-    choice=$(ui_menu "$(msg edition_title)" "$(msg edition_prompt)" \
-        "1" "$(msg edition_standard)" \
-        "2" "$(msg edition_lite)")
-
-    case "$choice" in
-        lite|2)
-            EDITION="lite"
-            EDITION_NAME="$(msg edition_name_lite)"
-            REPO="$LITE_REPO"
-            ;;
-        standard|1|"")
-            EDITION="standard"
-            EDITION_NAME="$(msg edition_name_standard)"
-            REPO="$STANDARD_REPO"
-            ;;
-        *)
-            EDITION="standard"
-            EDITION_NAME="$(msg edition_name_standard)"
-            REPO="$STANDARD_REPO"
-            ;;
-    esac
-    if [ "$EDITION" = "lite" ]; then
-        progress_add "$(msg progress_edition_lite)"
-    else
-        progress_add "$(msg progress_edition_standard)"
-    fi
+    EDITION="standard"
+    EDITION_NAME="$(msg edition_name_standard)"
+    REPO="$STANDARD_REPO"
+    progress_add "$(msg progress_edition_standard)"
     log_info "$(msg selected_edition "$EDITION_NAME")"
 }
 
 # 设置发布通道，结果写入全局变量 CHANNEL。
 select_channel() {
     local choice
-
-    if [ "$EDITION" = "lite" ]; then
-        CHANNEL="stable"
-        CHANNEL_NAME="$(msg channel_name_stable)"
-        progress_add "$CHANNEL_NAME"
-        log_info "$(msg selected_channel "$CHANNEL_NAME")"
-        return 0
-    fi
 
     choice=$(ui_menu "$(msg channel_title)" "$(msg channel_prompt)" \
         "1" "$(msg channel_stable)" \
@@ -927,15 +884,10 @@ get_download_url() {
     local arch=$1
     local file_name="komari-linux-${arch}"
 
-    # Lite 仓库没有 snapshot 发布，始终使用正式版下载地址。
-    if [ "$EDITION" = "lite" ]; then
-        CHANNEL="stable"
-    fi
-
     if [ "$CHANNEL" = "snapshot" ]; then
-        # 获取最新的 snapshot 预发布版本
+        # 获取最新的预发布版本（不再限定 Snapshot- 前缀）
         log_info "$(msg fetch_snapshot)" >&2
-        local latest_snapshot=$(curl -s "https://api.github.com/repos/${REPO}/releases" | grep '"tag_name"' | grep 'Snapshot-' | head -1 | sed -e 's/.*"tag_name": *"//' -e 's/".*//')
+        local latest_snapshot=$(curl -s "https://api.github.com/repos/${REPO}/releases" | grep '"tag_name"' | head -1 | sed -e 's/.*"tag_name": *"//' -e 's/".*//')
 
         if [ -z "$latest_snapshot" ]; then
             log_error "$(msg snapshot_not_found)" >&2
