@@ -39,15 +39,15 @@ Komari 是一款轻量级的自托管服务器监控工具，旨在提供简单�
 ### 一键安装（推荐）
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/aomtest/komari-slim-server/main/install-komari.sh | bash
+curl -fsSL https://raw.githubusercontent.com/aomtest/komari-slim-server/main/install-komari-slim.sh | bash
 ```
 
 脚本运行后按提示选择语言与版本即可，默认安装到 `/opt/komari` 并注册 systemd 服务。
 
 > 国内访问 `raw.githubusercontent.com` 可能失败，可先手动下载脚本再执行：
 > ```bash
-> curl -fsSL -o install-komari.sh https://raw.githubusercontent.com/aomtest/komari-slim-server/main/install-komari.sh
-> bash install-komari.sh
+> curl -fsSL -o install-komari-slim.sh https://raw.githubusercontent.com/aomtest/komari-slim-server/main/install-komari-slim.sh
+> bash install-komari-slim.sh
 > ```
 
 ### 手动安装
