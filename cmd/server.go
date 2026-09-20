@@ -31,6 +31,10 @@ func init() {
 //
 // 具体各阶段的职责与顺序见 internal/server.App。这里只负责串联：
 // 任一初始化阶段失败即中止启动，避免在半初始化状态下对外提供服务。
+//
+// 裁剪说明：移除了数据库结构迁移向导与 Metric Store 恢复向导。
+// 首次安装引导（RunInstallGuide）保留，它是全新部署的必经路径。
+// Metric Store 连接失败时直接中止启动，由运维修正配置后重启。
 func RunServer() {
 	app := appserver.New(appserver.Options{ListenAddr: flags.Listen})
 	if err := app.Bootstrap(); err != nil {
@@ -54,43 +58,9 @@ func RunServer() {
 		}
 	}
 
-	for {
-		requirement, err := app.DatabaseMigrationRequired()
-		if err != nil {
-			completed, recoveryErr := app.RunMetricStoreRecovery(err)
-			if recoveryErr != nil {
-				_ = app.Shutdown()
-				logger.Fatalf("server", "server startup failed at %q: %v", "database-migration-detection-recovery", recoveryErr)
-			}
-			if !completed {
-				return
-			}
-			continue
-		}
-		if !requirement.Required() {
-			break
-		}
-		completed, err := app.RunDatabaseMigration(requirement)
-		if err != nil {
-			_ = app.Shutdown()
-			logger.Fatalf("server", "server startup failed at %q: %v", "run-database-migration", err)
-		}
-		if !completed {
-			return
-		}
-	}
-
-	// Metric store 是唯一允许进入恢复向导的启动阶段：主库已经在
-	// Bootstrap 中就绪，因此可以保留登录能力并让管理员修正 DSN。
 	if err := app.ConnectMetricStoreWithRetry(); err != nil {
-		completed, recoveryErr := app.RunMetricStoreRecovery(err)
-		if recoveryErr != nil {
-			_ = app.Shutdown()
-			logger.Fatalf("server", "server startup failed at %q: %v", "metric-store-recovery", recoveryErr)
-		}
-		if !completed {
-			return
-		}
+		_ = app.Shutdown()
+		logger.Fatalf("server", "server startup failed at %q: %v", "connect-metric-store", err)
 	}
 
 	// 其余初始化阶段：任一步失败都不应继续对外服务。

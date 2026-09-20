@@ -11,10 +11,13 @@ import (
 	"strconv"
 
 	"github.com/google/uuid"
-	"github.com/komari-monitor/komari/web/backup"
 )
 
 const ChunkSize int64 = 5 * 1024 * 1024
+
+// MaxArchiveSize 为归档上传的大小上限（4 GiB）。原先定义在 web/backup 包，
+// 该包随备份还原功能一并移除后，移到上传模块自身。
+const MaxArchiveSize int64 = 4 << 30
 
 type Purpose string
 
@@ -46,7 +49,7 @@ type Store struct {
 
 var DefaultStore = &Store{
 	Root:    filepath.Join(".", "data", ".uploading"),
-	MaxSize: backup.MaxArchiveSize,
+	MaxSize: MaxArchiveSize,
 }
 
 func (s *Store) Init(purpose Purpose, filename string, size int64) (Session, error) {

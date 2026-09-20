@@ -23,7 +23,6 @@ type App struct {
 	server                  *http.Server
 	reload                  *ReloadManager
 	dbReady                 bool
-	oauthReady              bool
 	metricStoreCleanupAdded bool
 
 	cleanups []cleanupFunc
