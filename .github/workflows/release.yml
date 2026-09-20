@@ -1,0 +1,113 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+      - 'Snapshot-*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - goos: linux
+            goarch: amd64
+            target: x86_64-linux-musl
+            binary: komari-linux-amd64
+            ext: ''
+          - goos: linux
+            goarch: arm64
+            target: aarch64-linux-musl
+            binary: komari-linux-arm64
+            ext: ''
+          - goos: windows
+            goarch: amd64
+            target: x86_64-windows-gnu
+            binary: komari-windows-amd64
+            ext: '.exe'
+    steps:
+      - name: Checkout server
+        uses: actions/checkout@v4
+        with:
+          path: server
+
+      - name: Checkout web
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository_owner }}/komari-slim-web
+          path: web
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.27'
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Setup Zig
+        uses: goto-bus-stop/setup-zig@v2
+        with:
+          version: 0.14.0
+
+      - name: Install zstd
+        run: sudo apt-get update && sudo apt-get install -y zstd
+
+      - name: Build frontend
+        working-directory: ./web
+        run: |
+          npm ci
+          npm run build
+          mkdir -p "${{ github.workspace }}/server/web/public/defaultTheme"
+          tar -cf "${{ github.workspace }}/server/web/public/defaultTheme/dist.tar" -C dist .
+          zstd -19 -T0 -q -f "${{ github.workspace }}/server/web/public/defaultTheme/dist.tar" -o "${{ github.workspace }}/server/web/public/defaultTheme/dist.tar.zst"
+          rm -f "${{ github.workspace }}/server/web/public/defaultTheme/dist.tar"
+          cp -f komari-theme.json "${{ github.workspace }}/server/web/public/defaultTheme/komari-theme.json"
+          if [ -f preview.webp ]; then cp -f preview.webp "${{ github.workspace }}/server/web/public/defaultTheme/preview.webp"; fi
+
+      - name: Build binary
+        working-directory: ./server
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: 1
+          CC: zig cc -target ${{ matrix.target }}
+        run: |
+          H="${GITHUB_SHA::7}"
+          VERSION="${GITHUB_REF_NAME}"
+          go build -trimpath -ldflags="-s -w -X github.com/komari-monitor/komari/utils.CurrentVersion=${VERSION} -X github.com/komari-monitor/komari/utils.VersionHash=${H}" -o "build/${{ matrix.binary }}${{ matrix.ext }}" .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.binary }}${{ matrix.ext }}
+          path: server/build/${{ matrix.binary }}${{ matrix.ext }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Flatten artifacts
+        run: |
+          mkdir -p release
+          find artifacts -type f -exec cp {} release/ \;
+          ls -la release/
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release/*
+          generate_release_notes: true
