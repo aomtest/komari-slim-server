@@ -12,7 +12,7 @@
 > 详见 [DISCLAIMER.md](./DISCLAIMER.md)
 
 <div align="center">
-  <img src="docs/logo.png" width="460" alt="komari-slim"/>
+  <img src="docs/logo.png" width="100%" alt="komari-slim"/>
 </div>
 
 ![Badge](https://hitscounter.dev/api/hit?url=https%3A%2F%2Fgithub.com%2Faomtest%2Fkomari-slim-server&label=&icon=github&color=%23a370f7&message=&style=flat&tz=UTC)
