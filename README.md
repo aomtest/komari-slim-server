@@ -35,6 +35,24 @@ Komari is a lightweight, self-hosted server monitoring solution. It provides a s
 
 ## Quick Start
 
+### One-click install (recommended)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/aomtest/komari-slim-server/main/install-komari.sh | bash
+```
+
+Follow the prompts to pick your language and edition. It installs to `/opt/komari` and registers a systemd service by default.
+
+> If `raw.githubusercontent.com` is unreachable, download the script first and run it locally:
+> ```bash
+> curl -fsSL -o install-komari.sh https://raw.githubusercontent.com/aomtest/komari-slim-server/main/install-komari.sh
+> bash install-komari.sh
+> ```
+
+### Manual install
+
+Prebuilt binaries are on the [Releases](https://github.com/aomtest/komari-slim-server/releases) page (Linux amd64 / arm64, Windows amd64).
+
 For instructions on Docker deployment, binary installation, building from source, and updates, see the [installation guide](https://www.komari.wiki/en/install/quick-start).
 
 ## Screenshots
