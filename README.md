@@ -1,5 +1,16 @@
 # Komari
 
+> **【非官方精简版 / Unofficial trimmed fork】**
+>
+> 本项目是 [komari-monitor](https://github.com/komari-monitor) 的非官方精简修改版，**仅供个人学习与自用，禁止商业用途**。
+> 若原作者或任何权利人对本衍生版本有异议，请提 Issue，**我会立即删除本仓库及相关发布物**。
+>
+> This is an unofficial, trimmed derivative of komari-monitor, for **personal study and
+> non-commercial use only**. If any rights holder objects, please open an issue and
+> **I will remove this repository and its releases immediately**.
+>
+> 详见 [DISCLAIMER.md](./DISCLAIMER.md)
+
 ![Badge](https://hitscounter.dev/api/hit?url=https%3A%2F%2Fgithub.com%2Fkomari-monitor%2Fkomari&label=&icon=github&color=%23a370f7&message=&style=flat&tz=UTC)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/komari-monitor/komari)
 
