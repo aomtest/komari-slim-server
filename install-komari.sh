@@ -127,10 +127,6 @@ msg() {
             en_text='Uninstallation complete'
             zh_text='卸载完成'
             ;;
-        sponsor_info)
-            en_text='Sponsors:\n  AxisNow: Self-hosted private CDN with a flexible, modular network.\n  Dream Cloud: Cost-effective Asia-Pacific hosting with direct connectivity and DDoS protection.\n  Sharon Networks: China-optimized connectivity with low latency, high bandwidth, and Tbps-scale DDoS mitigation.'
-            zh_text='赞助商：\n  AxisNow：自建私有部署 CDN，订阅式高仿 CDN，自主可控、灵活组合的 CDN 网络。\n  Dream Cloud：高性价比直连亚太高防，真高防，不虚标，打死退款。\n  Sharon Networks：亚太数据中心提供中国优化网络，低延时、高带宽，并提供 Tbps 级本地清洗高防。'
-            ;;
         language_prompt)
             en_text='Select language / 请选择语言:'
             zh_text='Select language / 请选择语言:'
@@ -1160,7 +1156,6 @@ install_binary() {
         progress_add "$(msg progress_complete)"
         local content
         content=$(msg no_systemd_manual "$EDITION_NAME" "$BINARY_PATH" "$LISTEN_PORT")
-        content="$(printf '%s\n\n%s' "$(msg sponsor_info)" "$content")"
         ui_msgbox "$(msg title_install_complete)" "$content"
         return
     fi
@@ -1217,7 +1212,6 @@ show_access_info() {
     content=$(msg access_info \
         "$ip" "$port" \
         "$SERVICE_NAME" "$SERVICE_NAME" "$SERVICE_NAME" "$SERVICE_NAME" "$SERVICE_NAME")
-    content="$(printf '%s\n\n%s' "$(msg sponsor_info)" "$content")"
 
     ui_msgbox "$(msg title_install_complete)" "$content"
 }
