@@ -1,9 +1,21 @@
-# Komari
+# komari-slim
 
-![Badge](https://hitscounter.dev/api/hit?url=https%3A%2F%2Fgithub.com%2Fkomari-monitor%2Fkomari&label=&icon=github&color=%23a370f7&message=&style=flat&tz=UTC)
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/komari-monitor/komari)
+> **【非官方精简版 / Unofficial trimmed fork】**
+>
+> 本项目是 [komari-monitor](https://github.com/komari-monitor) 的非官方精简修改版，**仅供个人学习与自用，禁止商业用途**。
+> 若原作者或任何权利人对本衍生版本有异议，请提 Issue，**我会立即删除本仓库及相关发布物**。
+>
+> This is an unofficial, trimmed derivative of komari-monitor, for **personal study and
+> non-commercial use only**. If any rights holder objects, please open an issue and
+> **I will remove this repository and its releases immediately**.
+>
+> 详见 [DISCLAIMER.md](./DISCLAIMER.md)
 
-![komari](https://socialify.git.ci/komari-monitor/komari/image?description=1&font=Inter&forks=1&issues=1&language=1&logo=https%3A%2F%2Fraw.githubusercontent.com%2Fkomari-monitor%2Fkomari-web%2Fd54ce1288df41ead08aa19f8700186e68028a889%2Fpublic%2Ffavicon.png&name=1&owner=1&pattern=Plus&pulls=1&stargazers=1&theme=Auto)
+<div align="center">
+  <img src="docs/logo.jpg" width="180" alt="komari-slim"/>
+</div>
+
+![Badge](https://hitscounter.dev/api/hit?url=https%3A%2F%2Fgithub.com%2Faomtest%2Fkomari-slim-server&label=&icon=github&color=%23a370f7&message=&style=flat&tz=UTC)
 
 [English](./README.md) | [简体中文](./README_zh-cn.md)
 
