@@ -19,7 +19,7 @@
 
 [English](./README.md) | [简体中文](./README_zh-cn.md)
 
-Komari is a lightweight, self-hosted server monitoring solution. It provides a simple and efficient way to track server performance through a web interface, with metrics collected by a lightweight agent.
+komari-slim is a lightweight, self-hosted server monitoring tool — a trimmed fork of Komari focused purely on performance monitoring. It tracks server metrics through a web dashboard, with data collected by a lightweight agent, while stripping out execution surfaces (terminal, file manager, command dispatch, plugins) to keep the attack surface minimal.
 
 > [!WARNING]
 > Komari is a self-hosted server monitoring application. Deploy it only on systems you own or are authorized to manage. You are solely responsible for how you deploy and use it. The developers accept no liability for any consequences arising from its deployment or use.
