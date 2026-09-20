@@ -35,8 +35,6 @@ func registerPublicRoutes(r *gin.Engine) {
 	r.GET("/api/logout", public_api.Logout)
 	r.GET("/api/oauth", public_api.OAuth)
 	r.GET("/api/oauth_callback", public_api.OAuthCallback)
-	// 插件公开页面（visibility=public 的 iframe 页面），无需鉴权。
-	r.GET("/api/plugin/:short/*filepath", public_api.ServePluginFile)
 	// /api/clients 是 WebSocket 端点（客户端发 "get"/"get <uuid>" 拉取在线列表与最新上报），
 	// 非 JSON-RPC，保留为 WS handler。
 	r.GET("/api/clients", api.GetClients)
@@ -171,25 +169,6 @@ func registerAdminRoutes(r *gin.Engine) {
 	}
 
 	g.GET("/logs", jsonRpc.Bind("admin:getLogs", jsonRpc.WithQuery("limit", "page")))
-
-	// plugins: 安装流程通过统一的分片上传接口，启停/列表/日志走 RPC2，市场对齐主题市场。
-	pluginGroup := g.Group("/plugin")
-	{
-		pluginGroup.GET("/list", jsonRpc.Bind("admin:listPlugins"))
-		pluginGroup.POST("/enabled", jsonRpc.Bind("admin:setPluginEnabled"))
-		pluginGroup.GET("/logs", jsonRpc.Bind("admin:getPluginLogs", jsonRpc.WithQuery("short")))
-		pluginGroup.GET("/market/sources", admin.ListPluginMarketSources)
-		pluginGroup.POST("/market/sources", admin.CreatePluginMarketSource)
-		pluginGroup.PUT("/market/sources/:id", admin.UpdatePluginMarketSource)
-		pluginGroup.DELETE("/market/sources/:id", admin.DeletePluginMarketSource)
-		pluginGroup.GET("/market/catalog", admin.ListPluginMarketCatalog)
-		pluginGroup.POST("/market/install", admin.InstallPluginFromMarket)
-		pluginGroup.POST("/delete", jsonRpc.Bind("admin:deletePlugin"))
-		pluginGroup.GET("/configuration", jsonRpc.Bind("admin:getPluginConfiguration", jsonRpc.WithQuery("short")))
-		pluginGroup.POST("/configuration", jsonRpc.Bind("admin:setPluginConfiguration"))
-		// 插件注入的管理页面静态文件
-		pluginGroup.GET("/:short/*filepath", admin.ServePluginFile)
-	}
 
 	// notifications
 	notificationGroup := g.Group("/notification")

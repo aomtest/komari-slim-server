@@ -19,7 +19,6 @@ import (
 	"github.com/komari-monitor/komari/internal/config"
 	"github.com/komari-monitor/komari/internal/lifecycle"
 	"github.com/komari-monitor/komari/internal/metricstore"
-	"github.com/komari-monitor/komari/internal/plugin"
 	"github.com/komari-monitor/komari/internal/scheduler"
 	"github.com/komari-monitor/komari/utils/geoip"
 	logger "github.com/komari-monitor/komari/utils/log"
@@ -97,14 +96,6 @@ func (a *App) BuildRouter() error {
 	})
 	router.Register(r)
 
-	// Plugins are loaded after the router exists so server.route can bind
-	// routes; a failed plugin only disables itself and is logged.
-	plugin.Init(r)
-	if err := plugin.LoadAll(); err != nil {
-		logger.ErrorArgs("server", "Failed to load some plugins:", err)
-	}
-	a.addCleanup("plugins", func(context.Context) error { return plugin.CloseAll() })
-
 	a.registerReloadHandlers(cors)
 	a.reload.Start()
 	a.engine = r
@@ -113,10 +104,7 @@ func (a *App) BuildRouter() error {
 
 // Run starts the normal HTTP server and blocks until shutdown or fatal error.
 func (a *App) Run() error {
-	// The HTML injector runs outside the hook chain so it sees the final
-	// response: plugin hooks can still rewrite the body, then the registered
-	// head/body fragments are embedded into every text/html page.
-	a.server = &http.Server{Addr: a.listenAddr, Handler: plugin.HTMLInjectHandler(plugin.WrapHandler(a.engine))}
+	a.server = &http.Server{Addr: a.listenAddr, Handler: a.engine}
 	serverErr := make(chan error, 1)
 	logger.Infof("server", "Starting server on %s ...", a.listenAddr)
 	go func() {
