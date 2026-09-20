@@ -41,27 +41,12 @@ Docker、二进制文件、源码构建和更新说明，请参阅 [安装指南
 | 网页终端     | <img src="https://b2.akz.moe/awesome-pictures/komari-screenshot/%E7%BD%91%E9%A1%B5%E7%BB%88%E7%AB%AF.webp" width="800" alt="网页终端">                       |
 | 主题可自定义 | <img src="https://b2.akz.moe/awesome-pictures/komari-screenshot/%E4%B8%BB%E9%A2%98%E5%8F%AF%E8%87%AA%E5%AE%9A%E4%B9%89.webp" width="800" alt="主题可自定义"> |
 | 主题市场     | <img src="https://b2.akz.moe/awesome-pictures/komari-screenshot/%E4%B8%BB%E9%A2%98%E5%B8%82%E5%9C%BA.webp" width="800" alt="主题市场">                       |
-
-## 赞助商
-
-有意赞助 Komari？请通过 [电子邮箱](mailto:komari@akz.moe) 或 [Telegram](https://t.me/mamomoe) 联系开发者。
-
-| 赞助商                                                                                                                                                                                           | 描述                                                                                                                                                                                                                |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| <a href="https://axisnow.io/zh?utm=komari"><img src="https://raw.githubusercontent.com/komari-monitor/public/refs/heads/main/images/AxisNow.jpg" alt="AxisNow" width="180"></a> | [自建私有部署CDN \| 订阅式高仿CDN \| 自主可控、灵活组合的CDN网络](https://axisnow.io/zh?utm=komari) |
-| <a href="https://whmcs.as211392.com/aff.php?aff=110"><img src="https://raw.githubusercontent.com/komari-monitor/public/refs/heads/main/images/dreamcloud.png" alt="Dream Cloud" width="180"></a> | 极高性价比解锁直连亚太高防，真高防，不虚标，打死退款                                                                                                                                                                |
-| <a href="https://sharon.io"><img src="https://raw.githubusercontent.com/komari-monitor/public/refs/heads/main/images/sharon-networks.webp" alt="Sharon Networks" width="180"></a>                | 亚太数据中心提供顶级的中国优化网络接入 · 低延时&高带宽&提供Tbps级本地清洗高防服务, 为您的业务保驾护航, 为您的客户提供极致体验. 加入社区 [Telegram群组](https://t.me/SharonNetwork) 可参与公益募捐或群内抽奖免费使用 |
-
 ## 贡献者
 
 感谢所有为 Komari 贡献代码、主题、插件、文档、翻译、问题报告或反馈的朋友。
 
 <a href="https://github.com/komari-monitor/komari/graphs/contributors"><img src="https://contributors-img.web.app/image?repo=komari-monitor/komari" alt="Komari 贡献者" width="600"></a>
 
-## 支持项目
+---
 
-如果 Komari 对你有所帮助，欢迎请作者喝一杯奶茶。感谢你的支持！
-
-| 微信赞赏码                                                                                       | TRON Network                                                                |
-| ------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------- |
-| ![wechat](https://b2.akz.moe/awesome-pictures/%E5%BE%AE%E4%BF%A1%E8%B5%9E%E8%B5%8F%E7%A0%81.png) | ![TRON](https://b2.akz.moe/awesome-pictures/PixPin_2026-08-07_15-16-52.png) |
+本项目为个人自用的非官方衍生版本，**不接受任何形式的捐赠或赞助**。
