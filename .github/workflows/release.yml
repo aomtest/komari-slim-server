@@ -65,30 +65,51 @@ jobs:
             ext: '.exe'
     steps:
       - name: Checkout server
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           path: server
 
       - name: Checkout web
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: ${{ github.repository_owner }}/komari-slim-web
           path: web
 
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v7
         with:
           go-version: '1.27'
+          # 必须显式指定依赖文件位置：server 被检出到 server/ 子目录，
+          # 而 setup-go 默认在**仓库根目录**找 go.sum，找不到就报
+          # "Dependencies file is not found ... Supported file pattern: go.sum"
+          # 并让缓存失效（CI 日志里会看到 Cache service responded with 400）。
+          cache: true
+          cache-dependency-path: server/go.sum
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: '22'
 
-      - name: Setup Zig
-        uses: goto-bus-stop/setup-zig@v2
-        with:
-          version: 0.14.0
+      # 手工安装 zig，不用 action。
+      # 原因：goto-bus-stop/setup-zig@v2（作者已标记为 legacy，其 action.yml
+      # 里写着 "Please use mlugg/setup-zig instead"）和 mlugg/setup-zig
+      # **目前都仍是 runs.using: node20**，会持续触发 Node 20 弃用告警。
+      # 手工下载没有这个依赖，也不会再有该告警。
+      # 代价：每个 job 各自下载约 47MB，且失去 action 自带的编译器缓存；
+      # 8 个 job 并行，墙钟时间增加约 10-20 秒。发布频率不高，可以接受。
+      - name: Install Zig 0.14.0
+        run: |
+          set -euo pipefail
+          ZIG_VER=0.14.0
+          # 注意 0.14.0 用的是旧命名 zig-linux-x86_64-<ver>.tar.xz，
+          # 新的 zig-<arch>-linux-<ver>.tar.xz 对 0.14.0 会 404（已实测）。
+          curl -fsSL -o /tmp/zig.tar.xz \
+            "https://ziglang.org/download/${ZIG_VER}/zig-linux-x86_64-${ZIG_VER}.tar.xz"
+          mkdir -p "$HOME/zig"
+          tar -xJf /tmp/zig.tar.xz -C "$HOME/zig" --strip-components=1
+          echo "$HOME/zig" >> "$GITHUB_PATH"
+          "$HOME/zig/zig" version
 
       - name: Install zstd
         run: sudo apt-get update && sudo apt-get install -y zstd
@@ -118,7 +139,7 @@ jobs:
           go build -trimpath -ldflags="-s -w -X github.com/komari-monitor/komari/utils.CurrentVersion=${VERSION} -X github.com/komari-monitor/komari/utils.VersionHash=${H}" -o "build/${{ matrix.binary }}${{ matrix.ext }}" .
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.binary }}${{ matrix.ext }}
           path: server/build/${{ matrix.binary }}${{ matrix.ext }}
@@ -128,7 +149,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        # 停在 v7 而不是最新的 v8：v8 改了下载行为
+        # （"will no longer attempt to unzip all downloaded files"，
+        #  且有 "Enforced checks (breaking)"），会破坏下面
+        # "下载多个 artifact 后 find + cp 拍平" 的逻辑。
+        uses: actions/download-artifact@v7
         with:
           path: artifacts
 
