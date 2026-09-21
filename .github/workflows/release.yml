@@ -15,7 +15,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # 这份矩阵必须与 install-komari-slim.sh 的 detect_arch() 对齐：
+        # 该函数接受 amd64 / arm64 / 386 / riscv64 / loong64 五种 Linux 架构，
+        # 拼出的 URL 是 komari-linux-<arch>。若矩阵少构建某个架构，
+        # 对应机器上跑安装脚本就会 404（且报错信息是"下载失败"，会误导成网络问题）。
+        # 覆盖范围与上游 komari 的 Release 一致（上游同样发布这 8 个资产）。
         include:
+          # ---- Linux ----
           - goos: linux
             goarch: amd64
             target: x86_64-linux-musl
@@ -26,10 +32,36 @@ jobs:
             target: aarch64-linux-musl
             binary: komari-linux-arm64
             ext: ''
+          - goos: linux
+            goarch: '386'
+            target: x86-linux-musl
+            binary: komari-linux-386
+            ext: ''
+          - goos: linux
+            goarch: riscv64
+            target: riscv64-linux-musl
+            binary: komari-linux-riscv64
+            ext: ''
+          - goos: linux
+            goarch: loong64
+            target: loongarch64-linux-musl
+            binary: komari-linux-loong64
+            ext: ''
+          # ---- Windows ----
           - goos: windows
             goarch: amd64
             target: x86_64-windows-gnu
             binary: komari-windows-amd64
+            ext: '.exe'
+          - goos: windows
+            goarch: arm64
+            target: aarch64-windows-gnu
+            binary: komari-windows-arm64
+            ext: '.exe'
+          - goos: windows
+            goarch: '386'
+            target: x86-windows-gnu
+            binary: komari-windows-386
             ext: '.exe'
     steps:
       - name: Checkout server
