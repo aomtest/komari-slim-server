@@ -1,5 +1,14 @@
 name: Release
 
+# 运行标题显式写成 tag 名。
+# 不设 run-name 时，GitHub Actions 默认拿**该 tag 指向的 commit 的 message**
+# 当标题。本仓库很多次发版是"源码无改动、只重新内嵌前端产物"，
+# 只推 tag 不产生新 commit，于是这些 tag 全部指向同一个 commit
+# （v0.1.12 ~ v0.1.17 都指向 859f632），Actions 列表里就一路复读那句
+# Revert 的 commit message，完全看不出是哪一版。设了 run-name 之后
+# 每个 run 直接显示 "Release v0.1.18"。
+run-name: Release ${{ github.ref_name }}
+
 on:
   push:
     tags:
