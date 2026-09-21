@@ -8,6 +8,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
@@ -20,6 +21,44 @@ var PublicFS embed.FS
 
 //go:embed defaultTheme/dist.tar.zst
 var embeddedDistArchive []byte
+
+// 站点配置注入前端 index.html 时使用的匹配模式。
+//
+// 这里刻意用"结构性"正则，而不是匹配前端源码里的字面量。历史教训：
+// 前端把 <title>Komari Monitor</title> 改成 <title>komari-slim</title> 后，
+// 服务端仍在搜旧字面量，导致站点名注入**静默失效**（v0.1.2 即如此，
+// 表现为自定义站点名不会出现在浏览器标签上）。改成匹配标签结构后，
+// 前端无论怎么改标题/描述文案都不会再破坏这个替换。
+var (
+	htmlTitlePattern = regexp.MustCompile(`<title>[^<]*</title>`)
+	htmlDescPattern  = regexp.MustCompile(
+		`(<meta\s+(?:name="description"|property="og:description"|name="twitter:description")\s+content=")[^"]*(")`)
+)
+
+// escapeReplacement 转义替换串里的 $，避免被 ReplaceAllString 当成反向引用展开。
+func escapeReplacement(s string) string {
+	return strings.ReplaceAll(s, "$", "$$")
+}
+
+// injectSiteConfig 把站点名称、描述、自定义 head/body 注入前端 HTML。
+func injectSiteConfig(htmlStr string, cfg map[string]any) string {
+	str := func(key string) string {
+		if v, ok := cfg[key].(string); ok {
+			return v
+		}
+		return ""
+	}
+
+	htmlStr = htmlTitlePattern.ReplaceAllString(
+		htmlStr, escapeReplacement("<title>"+str(config.SitenameKey)+"</title>"))
+	htmlStr = htmlDescPattern.ReplaceAllString(
+		htmlStr, "${1}"+escapeReplacement(str(config.DescriptionKey))+"${2}")
+
+	return strings.NewReplacer(
+		"</head>", str(config.CustomHeadKey)+"</head>",
+		"</body>", str(config.CustomBodyKey)+"</body>",
+	).Replace(htmlStr)
+}
 
 // 常量定义
 const (
@@ -143,7 +182,7 @@ func static(r *gin.RouterGroup, noRoute func(handlers ...gin.HandlerFunc), force
 			config.DescriptionKey: "A simple server monitor tool.",
 			config.CustomHeadKey:  "",
 			config.CustomBodyKey:  "",
-			config.SitenameKey:    "Komari Monitor",
+			config.SitenameKey:    "komari-slim",
 			config.ThemeKey:       DefaultTheme,
 		})
 		return cfg
@@ -236,14 +275,7 @@ func static(r *gin.RouterGroup, noRoute func(handlers ...gin.HandlerFunc), force
 		}
 
 		// 执行 HTML 内容替换
-		replacer := strings.NewReplacer(
-			"<title>Komari Monitor</title>", "<title>"+cfg[config.SitenameKey].(string)+"</title>",
-			"A simple server monitor tool.", cfg[config.DescriptionKey].(string),
-			"</head>", cfg[config.CustomHeadKey].(string)+"</head>",
-			"</body>", cfg[config.CustomBodyKey].(string)+"</body>",
-		)
-
-		c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(replacer.Replace(htmlStr)))
+		c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(injectSiteConfig(htmlStr, cfg)))
 	}
 
 	// ================= 路由定义 =================

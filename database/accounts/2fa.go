@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	TwoFactorIssuer = "Komari Monitor"
+	TwoFactorIssuer = "komari-slim"
 )
 
 func Generate2Fa() (string, image.Image, error) {

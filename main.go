@@ -15,7 +15,7 @@ func main() {
 		logger.Setup(slog.LevelInfo)
 	}
 
-	logger.Infof("server", "Komari Monitor %s (hash: %s)", utils.CurrentVersion, utils.VersionHash)
+	logger.Infof("server", "komari-slim %s (hash: %s)", utils.CurrentVersion, utils.VersionHash)
 
 	cmd.Execute()
 }

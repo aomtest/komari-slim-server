@@ -34,10 +34,10 @@ func GetPublicInfo() (map[string]interface{}, error) {
 
 	// Apply defaults only when a key is missing.
 	if !hasKey("sitename") {
-		cst.Sitename = "Komari"
+		cst.Sitename = "komari-slim"
 	}
 	if !hasKey("description") {
-		cst.Description = "Komari Monitor, a simple server monitoring tool."
+		cst.Description = "komari-slim, a simple server monitoring tool."
 	}
 	if !hasKey("theme") {
 		cst.Theme = "default"
@@ -49,10 +49,10 @@ func GetPublicInfo() (map[string]interface{}, error) {
 	// Fallback defaults if we couldn't enumerate keys.
 	if allErr != nil {
 		if cst.Sitename == "" {
-			cst.Sitename = "Komari"
+			cst.Sitename = "komari-slim"
 		}
 		if cst.Description == "" {
-			cst.Description = "Komari Monitor, a simple server monitoring tool."
+			cst.Description = "komari-slim, a simple server monitoring tool."
 		}
 	}
 	retention, err := metricstore.GetRetentionSummary(context.Background())
