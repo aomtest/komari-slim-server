@@ -1,5 +1,18 @@
 #!/bin/bash
 
+# curl | bash 执行时 stdin 是管道，交互式读取必须回连终端。
+if [ ! -t 0 ]; then
+    if [ -e /dev/tty ]; then
+        exec 0</dev/tty
+    else
+        printf '%s\n' "错误：未检测到交互终端，无法进行交互式安装。" >&2
+        printf '%s\n' "请先下载脚本到本地再执行：" >&2
+        printf '%s\n' "  curl -fsSL -o install-komari-slim.sh https://raw.githubusercontent.com/aomtest/komari-slim-server/main/install-komari-slim.sh" >&2
+        printf '%s\n' "  bash install-komari-slim.sh" >&2
+        exit 1
+    fi
+fi
+
 # Color definitions for terminal output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
