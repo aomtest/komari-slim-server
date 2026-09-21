@@ -39,7 +39,7 @@ komari-slim 是一款轻量级的自托管服务器监控工具，是 Komari 的
 ### 一键安装（推荐）
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/aomtest/komari-slim-server/main/install-komari-slim.sh | bash
+bash <(curl -fsSL https://raw.githubusercontent.com/aomtest/komari-slim-server/main/install-komari-slim.sh)
 ```
 
 脚本运行后按提示选择语言与版本即可，默认安装到 `/opt/komari` 并注册 systemd 服务。

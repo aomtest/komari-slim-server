@@ -39,7 +39,7 @@ komari-slim is a lightweight, self-hosted server monitoring tool — a trimmed f
 ### One-click install (recommended)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/aomtest/komari-slim-server/main/install-komari-slim.sh | bash
+bash <(curl -fsSL https://raw.githubusercontent.com/aomtest/komari-slim-server/main/install-komari-slim.sh)
 ```
 
 Follow the prompts to pick your language and edition. It installs to `/opt/komari` and registers a systemd service by default.
