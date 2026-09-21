@@ -160,16 +160,16 @@ msg() {
             zh_text='选择安装版本'
             ;;
         edition_prompt)
-            en_text='Komari has multiple editions with different features and performance profiles. Choose the one that fits your controller.\n\nChoose the edition to install [default 1]:'
-            zh_text='Komari 目前提供多个版本，不同版本在功能和性能上有所差异，请根据主控配置选择。\n\n请选择安装的版本（默认 1）：'
+            en_text='komari-slim has multiple editions with different features and performance profiles. Choose the one that fits your controller.\n\nChoose the edition to install [default 1]:'
+            zh_text='komari-slim 目前提供多个版本，不同版本在功能和性能上有所差异，请根据主控配置选择。\n\n请选择安装的版本（默认 1）：'
             ;;
         edition_standard)
             en_text='Standard edition'
             zh_text='标准版本'
             ;;
         edition_name_standard)
-            en_text='Komari Standard'
-            zh_text='Komari 标准版'
+            en_text='komari-slim Standard'
+            zh_text='komari-slim 标准版'
             ;;
         selected_edition)
             en_text='Selected edition: %s'
@@ -208,8 +208,8 @@ msg() {
             zh_text='标准版'
             ;;
         progress_download)
-            en_text='Download Komari'
-            zh_text='下载 Komari'
+            en_text='Download komari-slim'
+            zh_text='下载 komari-slim'
             ;;
         progress_service)
             en_text='Configure system service'
@@ -228,8 +228,8 @@ msg() {
             zh_text='完成'
             ;;
         already_installed)
-            en_text='Komari is already installed.\nUse the management menu to upgrade it.'
-            zh_text='Komari 已安装。\n请使用管理菜单中的升级选项。'
+            en_text='komari-slim is already installed.\nUse the management menu to upgrade it.'
+            zh_text='komari-slim 已安装。\n请使用管理菜单中的升级选项。'
             ;;
         install_cancelled)
             en_text='Installation cancelled.'
@@ -240,8 +240,8 @@ msg() {
             zh_text='监听端口'
             ;;
         port_prompt)
-            en_text='Enter the Komari listen port (1-65535)'
-            zh_text='请输入 Komari 的监听端口（1-65535）'
+            en_text='Enter the komari-slim listen port (1-65535)'
+            zh_text='请输入 komari-slim 的监听端口（1-65535）'
             ;;
         invalid_port)
             en_text='Invalid port. Enter a number from 1 to 65535.'
@@ -328,12 +328,12 @@ msg() {
             zh_text='警告：未检测到 systemd，已跳过服务创建。\n\n您可以手动运行 %s：\n    %s server -l 0.0.0.0:%s'
             ;;
         service_started)
-            en_text='Komari service started successfully.'
-            zh_text='Komari 服务启动成功。'
+            en_text='komari-slim service started successfully.'
+            zh_text='komari-slim 服务启动成功。'
             ;;
         service_start_failed)
-            en_text='Komari service failed to start.\n\nView logs: journalctl -u %s -f'
-            zh_text='Komari 服务启动失败。\n\n查看日志：journalctl -u %s -f'
+            en_text='komari-slim service failed to start.\n\nView logs: journalctl -u %s -f'
+            zh_text='komari-slim 服务启动失败。\n\n查看日志：journalctl -u %s -f'
             ;;
         systemd_start)
             en_text='Creating systemd service...'
@@ -348,8 +348,8 @@ msg() {
             zh_text='访问地址：\n  http://%s:%s\n\n请在浏览器中创建管理员账号。\n\n服务管理命令：\n  状态：systemctl status %s\n  启动：systemctl start %s\n  停止：systemctl stop %s\n  重启：systemctl restart %s\n  日志：journalctl -u %s -f'
             ;;
         cleanup_confirm)
-            en_text='This will delete Komari binary upgrade backups and data upgrade archives.\n\nContinue?'
-            zh_text='将删除 Komari 的二进制升级备份和数据升级压缩包。\n\n确定继续吗？'
+            en_text='This will delete komari-slim binary upgrade backups and data upgrade archives.\n\nContinue?'
+            zh_text='将删除 komari-slim 的二进制升级备份和数据升级压缩包。\n\n确定继续吗？'
             ;;
         cleanup_cancelled)
             en_text='Backup cleanup cancelled.'
@@ -364,20 +364,20 @@ msg() {
             zh_text='清理范围：\n  二进制备份：%s\n  数据压缩包：%s\n  数据压缩包：%s'
             ;;
         upgrade_start)
-            en_text='Upgrading Komari...'
-            zh_text='升级 Komari...'
+            en_text='Upgrading komari-slim...'
+            zh_text='升级 komari-slim...'
             ;;
         not_installed)
-            en_text='Komari is not installed. Install it first.'
-            zh_text='Komari 未安装，请先安装。'
+            en_text='komari-slim is not installed. Install it first.'
+            zh_text='komari-slim 未安装，请先安装。'
             ;;
         systemd_required)
             en_text='systemd was not found. The service cannot be managed.'
             zh_text='未检测到 systemd，无法管理服务。'
             ;;
         stopping_service)
-            en_text='Stopping Komari service...'
-            zh_text='停止 Komari 服务...'
+            en_text='Stopping komari-slim service...'
+            zh_text='停止 komari-slim 服务...'
             ;;
         clearing_backups)
             en_text='Removing old binary backups...'
@@ -424,12 +424,12 @@ msg() {
             zh_text='服务在升级后未能启动，请检查日志。'
             ;;
         uninstall_start)
-            en_text='Uninstalling Komari...'
-            zh_text='卸载 Komari...'
+            en_text='Uninstalling komari-slim...'
+            zh_text='卸载 komari-slim...'
             ;;
         confirm_uninstall)
-            en_text='This will remove the Komari binary and service.\n\nContinue?'
-            zh_text='这将删除 Komari 二进制文件和服务。\n\n确定继续吗？'
+            en_text='This will remove the komari-slim binary and service.\n\nContinue?'
+            zh_text='这将删除 komari-slim 二进制文件和服务。\n\n确定继续吗？'
             ;;
         uninstall_cancelled)
             en_text='Uninstallation cancelled.'
@@ -452,24 +452,24 @@ msg() {
             zh_text='数据目录 %s 不为空，未删除。'
             ;;
         binary_removed)
-            en_text='Komari binary removed.'
-            zh_text='Komari 二进制文件已删除。'
+            en_text='komari-slim binary removed.'
+            zh_text='komari-slim 二进制文件已删除。'
             ;;
         uninstall_complete)
             en_text='Data files were kept at %s.'
             zh_text='数据文件保留在 %s。'
             ;;
         service_status)
-            en_text='Komari service status:'
-            zh_text='Komari 服务状态：'
+            en_text='komari-slim service status:'
+            zh_text='komari-slim 服务状态：'
             ;;
         service_logs)
-            en_text='View Komari service logs (press Ctrl+C to exit)...'
-            zh_text='查看 Komari 服务日志（按 Ctrl+C 退出）...'
+            en_text='View komari-slim service logs (press Ctrl+C to exit)...'
+            zh_text='查看 komari-slim 服务日志（按 Ctrl+C 退出）...'
             ;;
         restart_start)
-            en_text='Restarting Komari service...'
-            zh_text='重启 Komari 服务...'
+            en_text='Restarting komari-slim service...'
+            zh_text='重启 komari-slim 服务...'
             ;;
         restart_success)
             en_text='The service is running again.'
@@ -480,32 +480,32 @@ msg() {
             zh_text='服务重启失败，请检查日志。'
             ;;
         stop_start)
-            en_text='Stopping Komari service...'
-            zh_text='停止 Komari 服务...'
+            en_text='Stopping komari-slim service...'
+            zh_text='停止 komari-slim 服务...'
             ;;
         stop_success)
             en_text='The service is now stopped.'
             zh_text='服务当前已停止。'
             ;;
         main_title)
-            en_text='Komari management menu'
-            zh_text='Komari 管理菜单'
+            en_text='komari-slim management menu'
+            zh_text='komari-slim 管理菜单'
             ;;
         main_prompt)
             en_text='Select an action:'
             zh_text='请选择操作：'
             ;;
         main_install)
-            en_text='Install Komari'
-            zh_text='安装 Komari'
+            en_text='Install komari-slim'
+            zh_text='安装 komari-slim'
             ;;
         main_upgrade)
-            en_text='Upgrade Komari'
-            zh_text='升级 Komari'
+            en_text='Upgrade komari-slim'
+            zh_text='升级 komari-slim'
             ;;
         main_uninstall)
-            en_text='Uninstall Komari'
-            zh_text='卸载 Komari'
+            en_text='Uninstall komari-slim'
+            zh_text='卸载 komari-slim'
             ;;
         main_status)
             en_text='View service status'
@@ -861,7 +861,7 @@ detect_arch() {
     esac
 }
 
-# Check if Komari is already installed
+# Check if komari-slim is already installed
 is_installed() {
     if [ -f "$BINARY_PATH" ]; then
         return 0 # 0 means true in bash exit codes
@@ -1151,7 +1151,7 @@ create_systemd_service() {
     local service_file="/etc/systemd/system/${SERVICE_NAME}.service"
     cat > "$service_file" << EOF
 [Unit]
-Description=Komari Monitor Service
+Description=komari-slim Service
 After=network.target
 
 [Service]
