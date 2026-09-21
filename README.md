@@ -2,11 +2,10 @@
 
 > **【非官方精简版 / Unofficial trimmed fork】**
 >
-> 本项目是 [komari-monitor](https://github.com/komari-monitor) 的非官方精简修改版，**仅供个人学习与自用，禁止商业用途**。（本项目今日刚刚创建，目前未经过任何验证，极有可能无法正常安装，待后续验证后修复）
+> 本项目是 [komari-monitor](https://github.com/komari-monitor) 的非官方精简修改版。（本项目于昨日创建，目前仅基础功能经过初步验证，极有可能无法正常安装使用，待后续验证后修复）
 > 若原作者或任何权利人对本衍生版本有异议，请提 Issue，**我会立即删除本仓库及相关发布物**。
 >
-> This is an unofficial, trimmed derivative of komari-monitor, for **personal study and
-> non-commercial use only**. If any rights holder objects, please open an issue and
+> This is an unofficial, trimmed derivative of komari-monitor. If any rights holder objects, please open an issue and
 > **I will remove this repository and its releases immediately**.
 >
 > 详见 [DISCLAIMER.md](./DISCLAIMER.md)
