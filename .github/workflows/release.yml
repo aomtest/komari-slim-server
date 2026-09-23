@@ -187,6 +187,10 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
+      # 需要 CHANGELOG.md 来生成发布说明
+      - name: Checkout
+        uses: actions/checkout@v7
+
       - name: Download artifacts
         # 停在 v7 而不是最新的 v8：v8 改了下载行为
         # （"will no longer attempt to unzip all downloaded files"，
@@ -202,8 +206,34 @@ jobs:
           find artifacts -type f -exec cp {} release/ \;
           ls -la release/
 
+      # 从 CHANGELOG.md 抽出当前 tag 对应的小节作为发布说明。
+      #
+      # 为什么不用 GitHub 自动生成：本项目的 tag 打在 server 仓库，但绝大多数
+      # 用户可见改动在 web 仓库，而且很多次发版 server 侧根本没有新 commit。
+      # 自动生成的结果永远只有一行 compare 链接，且即使有内容也只会列出
+      # CI/内部改动，反而误导。所以发布说明一律手写。
+      #
+      # 找不到对应小节就**直接失败**：让"忘记写更新日志"在发布时立刻暴露，
+      # 而不是悄悄发一个没有说明的版本。
+      - name: Extract release notes from CHANGELOG.md
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF_NAME}"
+          if ! grep -qE "^## ${TAG}([[:space:]]|$)" CHANGELOG.md; then
+            echo "::error::CHANGELOG.md 里没有 ${TAG} 的小节，请先补上再发版。"
+            exit 1
+          fi
+          awk -v ver="${TAG}" '
+            $0 ~ "^## " ver "([ \t]|$)" { found = 1; next }
+            found && $0 ~ "^## " { exit }
+            found { print }
+          ' CHANGELOG.md > release-notes.md
+          echo "----- release-notes.md -----"
+          cat release-notes.md
+          echo "-----------------------------"
+
       - name: Create Release
         uses: softprops/action-gh-release@v3
         with:
           files: release/*
-          generate_release_notes: true
+          body_path: release-notes.md
