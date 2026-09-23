@@ -135,6 +135,35 @@ jobs:
           cp -f komari-theme.json "${{ github.workspace }}/server/web/public/defaultTheme/komari-theme.json"
           if [ -f preview.webp ]; then cp -f preview.webp "${{ github.workspace }}/server/web/public/defaultTheme/preview.webp"; fi
 
+      # 预下载依赖，并单独重试。
+      #
+      # 为什么必须单独做这一步：这是 8 个矩阵 job，每个 job 都在自己的 runner 上
+      # 各自下载一遍依赖，任何一个撞上 proxy.golang.org 的瞬时中断都会让整个发布失败
+      # ——因为 release job 声明了 `needs: build`，一个 job 挂掉它就整个被跳过，
+      # 结果就是 tag 有了、资产一个都没有（v0.1.20 即如此：
+      #   read "https://proxy.golang.org/.../puddle/v2/@v/v2.2.2.zip":
+      #   stream error: stream ID 147; INTERNAL_ERROR; received from peer）。
+      #
+      # 把「下载」与「编译」拆开，重试只覆盖网络这一步，
+      # 编译错误仍然会立刻失败、不会被重试掩盖。
+      #
+      # GOPROXY 给出回退源：默认只有 proxy.golang.org，它抖动时没有第二选择。
+      - name: Download Go modules (with retry)
+        working-directory: ./server
+        env:
+          GOPROXY: https://proxy.golang.org,https://goproxy.io,direct
+        run: |
+          for i in 1 2 3 4 5; do
+            if go mod download; then
+              echo "依赖下载完成（第 $i 次尝试）"
+              exit 0
+            fi
+            echo "::warning::go mod download 第 $i 次失败，10 秒后重试"
+            sleep 10
+          done
+          echo "::error::go mod download 连续 5 次失败"
+          exit 1
+
       - name: Build binary
         working-directory: ./server
         env:
@@ -142,6 +171,7 @@ jobs:
           GOARCH: ${{ matrix.goarch }}
           CGO_ENABLED: 1
           CC: zig cc -target ${{ matrix.target }}
+          GOPROXY: https://proxy.golang.org,https://goproxy.io,direct
         run: |
           H="${GITHUB_SHA::7}"
           VERSION="${GITHUB_REF_NAME}"
