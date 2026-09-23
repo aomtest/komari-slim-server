@@ -8,6 +8,13 @@ name: Build
 # 这类测试文件编译不过，现有 CI 完全发现不了。
 # 本 workflow 在 push / PR 时用 `go build ./...` + `go test ./...` 补上这块。
 #
+# 为什么必须先构建前端：web/public/public.go 用 `//go:embed` 嵌入
+#   defaultTheme/dist.tar.zst 与 defaultTheme/komari-theme.json
+# 而 web/public/.gitignore 把 defaultTheme/* 整个忽略了 —— 这两个文件
+# **从未提交过**，是发布 CI 现生成的。也就是说本仓库在干净检出下根本编译不了，
+# 直接跑 `go build ./...` 会报 "pattern defaultTheme/dist.tar.zst: no matching files found"。
+# 因此这里必须复刻 release.yml 的前端构建与打包步骤，路径与命令与其保持一致。
+#
 # 与发布互不阻塞：release.yml 由 tag 触发、本 workflow 由 push 触发，
 # 本 workflow 失败不会挡住发版，只是把问题提前暴露。
 
@@ -24,14 +31,47 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout server
         uses: actions/checkout@v7
+
+      # 检出到 web-src/：本仓库自己就有个 web/ 目录，不能占用
+      - name: Checkout web
+        uses: actions/checkout@v7
+        with:
+          repository: ${{ github.repository_owner }}/komari-slim-web
+          path: web-src
 
       - name: Setup Go
         uses: actions/setup-go@v7
         with:
           go-version: '1.27'
           cache: true
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+
+      - name: Install zstd
+        run: sudo apt-get update && sudo apt-get install -y zstd
+
+      # 与 release.yml 的 "Build frontend" 步骤保持一致
+      - name: Build frontend and pack default theme
+        working-directory: ./web-src
+        run: |
+          set -euo pipefail
+          npm ci
+          npm run build
+          mkdir -p "$GITHUB_WORKSPACE/web/public/defaultTheme"
+          tar -cf "$GITHUB_WORKSPACE/web/public/defaultTheme/dist.tar" -C dist .
+          zstd -19 -T0 -q -f "$GITHUB_WORKSPACE/web/public/defaultTheme/dist.tar" -o "$GITHUB_WORKSPACE/web/public/defaultTheme/dist.tar.zst"
+          rm -f "$GITHUB_WORKSPACE/web/public/defaultTheme/dist.tar"
+          cp -f komari-theme.json "$GITHUB_WORKSPACE/web/public/defaultTheme/komari-theme.json"
+          if [ -f preview.webp ]; then cp -f preview.webp "$GITHUB_WORKSPACE/web/public/defaultTheme/preview.webp"; fi
+
+      # 打包完就删掉源码树：留着会让 `go build ./...` 去遍历 node_modules，白等很久
+      - name: Remove web source tree
+        run: rm -rf web-src
 
       # ./... 覆盖所有包，包括当前已无引用但仍在仓库里的包
       - name: Build all packages
