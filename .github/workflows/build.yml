@@ -1,0 +1,43 @@
+name: Build
+
+# 为什么需要它：本仓库此前只在打 tag 时才构建（release.yml）。推入一个编译不过的
+# 改动，要等到发版那一刻才暴露 —— 而那时 tag 已经推出去、Release 也建了一半。
+#
+# 更隐蔽的是 release.yml 跑的是 `go build ... .`：只编译主包及其依赖，
+# **既不编译其余包，也不跑测试**。所以像 database/accounts/accounts_test.go
+# 这类测试文件编译不过，现有 CI 完全发现不了。
+# 本 workflow 在 push / PR 时用 `go build ./...` + `go test ./...` 补上这块。
+#
+# 与发布互不阻塞：release.yml 由 tag 触发、本 workflow 由 push 触发，
+# 本 workflow 失败不会挡住发版，只是把问题提前暴露。
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Go
+        uses: actions/setup-go@v7
+        with:
+          go-version: '1.27'
+          cache: true
+
+      # ./... 覆盖所有包，包括当前已无引用但仍在仓库里的包
+      - name: Build all packages
+        run: go build ./...
+
+      # pkg/metric 的 PostgreSQL / MySQL 集成测试在未设置对应 DSN 时会自行 Skip，
+      # 因此这里不需要额外的服务容器。
+      - name: Test
+        run: go test ./...
