@@ -1109,12 +1109,20 @@ install_binary() {
     log_step "$(msg download_binary "$EDITION_NAME")"
     log_info "$(msg download_url "$download_url")"
 
-    if ! download_file "$download_url" "$BINARY_PATH" "$EDITION_NAME"; then
+    # 同样先下到临时文件再原子改名：全新安装时虽然还没有运行中的服务，
+    # 但重装/半装状态下仍可能有残留进程或正在重试的 systemd 单元，
+    # 直接覆盖 $BINARY_PATH 一样会撞上 ETXTBSY。与 upgrade_komari 保持同一套写法。
+    local tmp_path="${BINARY_PATH}.new"
+    rm -f "$tmp_path"
+
+    if ! download_file "$download_url" "$tmp_path" "$EDITION_NAME"; then
+        rm -f "$tmp_path"
         ui_msgbox "$(msg title_error)" "$(msg download_failed)"
         return 1
     fi
 
-    chmod +x "$BINARY_PATH"
+    chmod +x "$tmp_path"
+    mv -f "$tmp_path" "$BINARY_PATH"
     log_success "$(msg binary_installed "$EDITION_NAME" "$BINARY_PATH")"
 
     if ! check_systemd; then
@@ -1250,15 +1258,33 @@ upgrade_komari() {
 
     progress_add "$(msg progress_download)"
     log_step "$(msg downloading_latest "$EDITION_NAME")"
-    if ! download_file "$download_url" "$BINARY_PATH" "$EDITION_NAME"; then
+
+    # 先下到同目录的临时文件，再原子改名覆盖。
+    #
+    # 为什么不直接写 "$BINARY_PATH"：download_file 会先把它截断（: > "$target"）
+    # 再往里写，整个下载期间（约 20-40 MB）该文件都处于「被打开待写」状态。
+    # systemd 在这个窗口里 exec 它会直接失败并报
+    #   Failed to execute /opt/komari/komari: Text file busy   (status=203/EXEC)
+    # 而服务是 Restart=always，几次失败后就会撞上 start-limit 彻底放弃启动
+    # （日志里表现为 "Start request repeated too quickly"，此后必须
+    #  systemctl reset-failed 才能再启动）。
+    #
+    # 同目录 rename 是原子操作，且旧 inode 对仍在运行的进程依然有效，
+    # 因此 $BINARY_PATH 任何时刻要么是完整的旧版本、要么是完整的新版本。
+    local tmp_path="${BINARY_PATH}.new"
+    rm -f "$tmp_path"
+
+    if ! download_file "$download_url" "$tmp_path" "$EDITION_NAME"; then
         log_error "$(msg download_failed_log)"
-        mv "$backup_path" "$BINARY_PATH"
+        rm -f "$tmp_path"
+        # $BINARY_PATH 全程未被碰过，旧版本仍然完好，直接重启即可
         systemctl start ${SERVICE_NAME}.service
         ui_msgbox "$(msg title_error)" "$(msg download_failed_restore)"
         return 1
     fi
 
-    chmod +x "$BINARY_PATH"
+    chmod +x "$tmp_path"
+    mv -f "$tmp_path" "$BINARY_PATH"
 
     progress_add "$(msg progress_restart)"
     log_step "$(msg restart_start)"
