@@ -10,6 +10,34 @@ them — they only ever produce a compare link. So entries are written by hand.
 The release workflow extracts the section matching the pushed tag and uses it as
 the release body. A tag without a matching section fails the release on purpose.
 
+## v0.1.21 - 2026-09-25
+
+### Changed
+
+- The Go module path is now `github.com/aomtest/komari-slim-server` instead of
+  upstream's `github.com/komari-monitor/komari`.
+
+  Nothing about a running instance changes. Install paths (`/opt/komari`), the
+  systemd service name (`komari`), the binary name, environment variables and the
+  database are all untouched, and no migration is involved — upgrading is a
+  normal binary swap.
+
+  The point is identity: the module previously declared itself to be upstream's,
+  so `go get github.com/komari-monitor/komari` fetched the original project and
+  this fork was unreachable through its own module path.
+
+### Internal
+
+- Added `.gitattributes` to force LF line endings in the repository. The working
+  tree had accumulated 240 `.go` files written as CRLF while the index held LF,
+  and git's stat cache hid the difference — so editing any of them showed up as a
+  whole-file rewrite. During the module rename above that would have committed
+  122 files with flipped line endings.
+- Local verification of the rename: all 54 packages resolve, `go list -deps`
+  walks the full import graph, and `./utils` reports the import path the release
+  workflow injects `CurrentVersion`/`VersionHash` into. The set of build errors is
+  byte-identical before and after the change.
+
 ## v0.1.20 - 2026-09-23
 
 ### Fixed
