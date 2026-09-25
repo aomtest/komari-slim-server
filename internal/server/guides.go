@@ -1,9 +1,9 @@
 package server
 
 import (
-	"github.com/komari-monitor/komari/database/dbcore"
-	"github.com/komari-monitor/komari/database/models"
-	installweb "github.com/komari-monitor/komari/web/install"
+	"github.com/aomtest/komari-slim-server/database/dbcore"
+	"github.com/aomtest/komari-slim-server/database/models"
+	installweb "github.com/aomtest/komari-slim-server/web/install"
 )
 
 // InstallRequired reports whether the instance still needs the first-run guide.

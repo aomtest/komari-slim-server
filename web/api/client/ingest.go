@@ -4,12 +4,12 @@ import (
 	"context"
 	"time"
 
-	"github.com/komari-monitor/komari/database/clients"
-	"github.com/komari-monitor/komari/database/models"
-	"github.com/komari-monitor/komari/database/tasks"
-	"github.com/komari-monitor/komari/internal/metricstore"
-	v2 "github.com/komari-monitor/komari/protocol/v2"
-	agent_runtime "github.com/komari-monitor/komari/web/agent"
+	"github.com/aomtest/komari-slim-server/database/clients"
+	"github.com/aomtest/komari-slim-server/database/models"
+	"github.com/aomtest/komari-slim-server/database/tasks"
+	"github.com/aomtest/komari-slim-server/internal/metricstore"
+	v2 "github.com/aomtest/komari-slim-server/protocol/v2"
+	agent_runtime "github.com/aomtest/komari-slim-server/web/agent"
 )
 
 // ingest.go

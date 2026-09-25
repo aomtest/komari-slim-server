@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/komari-monitor/komari/pkg/metric"
+	"github.com/aomtest/komari-slim-server/pkg/metric"
 )
 
 // Example_rollupTags demonstrates tagged rollups with automatic series routing.

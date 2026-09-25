@@ -1,4 +1,4 @@
-module github.com/komari-monitor/komari
+module github.com/aomtest/komari-slim-server
 
 go 1.25.0
 

@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/komari-monitor/komari/database/models"
-	"github.com/komari-monitor/komari/utils/messageSender/factory"
+	"github.com/aomtest/komari-slim-server/database/models"
+	"github.com/aomtest/komari-slim-server/utils/messageSender/factory"
 )
 
 func TestParseTemplateFormatsEventTimeInLocalTimezone(t *testing.T) {

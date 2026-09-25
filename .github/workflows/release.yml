@@ -175,7 +175,7 @@ jobs:
         run: |
           H="${GITHUB_SHA::7}"
           VERSION="${GITHUB_REF_NAME}"
-          go build -trimpath -ldflags="-s -w -X github.com/komari-monitor/komari/utils.CurrentVersion=${VERSION} -X github.com/komari-monitor/komari/utils.VersionHash=${H}" -o "build/${{ matrix.binary }}${{ matrix.ext }}" .
+          go build -trimpath -ldflags="-s -w -X github.com/aomtest/komari-slim-server/utils.CurrentVersion=${VERSION} -X github.com/aomtest/komari-slim-server/utils.VersionHash=${H}" -o "build/${{ matrix.binary }}${{ matrix.ext }}" .
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7

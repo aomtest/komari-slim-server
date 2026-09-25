@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/komari-monitor/komari/database/dbcore"
-	"github.com/komari-monitor/komari/database/models"
+	"github.com/aomtest/komari-slim-server/database/dbcore"
+	"github.com/aomtest/komari-slim-server/database/models"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )

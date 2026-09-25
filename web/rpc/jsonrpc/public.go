@@ -5,15 +5,15 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/komari-monitor/komari/database"
-	"github.com/komari-monitor/komari/database/clients"
-	"github.com/komari-monitor/komari/database/dbcore"
-	"github.com/komari-monitor/komari/database/models"
-	"github.com/komari-monitor/komari/database/records"
-	"github.com/komari-monitor/komari/database/tasks"
-	"github.com/komari-monitor/komari/pkg/rpc"
-	"github.com/komari-monitor/komari/utils"
-	agent_runtime "github.com/komari-monitor/komari/web/agent"
+	"github.com/aomtest/komari-slim-server/database"
+	"github.com/aomtest/komari-slim-server/database/clients"
+	"github.com/aomtest/komari-slim-server/database/dbcore"
+	"github.com/aomtest/komari-slim-server/database/models"
+	"github.com/aomtest/komari-slim-server/database/records"
+	"github.com/aomtest/komari-slim-server/database/tasks"
+	"github.com/aomtest/komari-slim-server/pkg/rpc"
+	"github.com/aomtest/komari-slim-server/utils"
+	agent_runtime "github.com/aomtest/komari-slim-server/web/agent"
 )
 
 // public.go

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/komari-monitor/komari/cmd/flags"
+	"github.com/aomtest/komari-slim-server/cmd/flags"
 
 	"github.com/spf13/cobra"
 )

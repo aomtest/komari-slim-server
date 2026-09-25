@@ -3,18 +3,18 @@ package messageSender
 import (
 	"encoding/json"
 	"fmt"
-	logger "github.com/komari-monitor/komari/utils/log"
+	logger "github.com/aomtest/komari-slim-server/utils/log"
 	"reflect"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/komari-monitor/komari/database"
-	"github.com/komari-monitor/komari/database/auditlog"
-	"github.com/komari-monitor/komari/database/clients"
-	"github.com/komari-monitor/komari/database/models"
-	"github.com/komari-monitor/komari/internal/config"
-	"github.com/komari-monitor/komari/utils/messageSender/factory"
+	"github.com/aomtest/komari-slim-server/database"
+	"github.com/aomtest/komari-slim-server/database/auditlog"
+	"github.com/aomtest/komari-slim-server/database/clients"
+	"github.com/aomtest/komari-slim-server/database/models"
+	"github.com/aomtest/komari-slim-server/internal/config"
+	"github.com/aomtest/komari-slim-server/utils/messageSender/factory"
 )
 
 var (

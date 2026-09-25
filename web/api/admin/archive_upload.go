@@ -1,7 +1,7 @@
 package admin
 
 import (
-	"github.com/komari-monitor/komari/web/upload"
+	"github.com/aomtest/komari-slim-server/web/upload"
 )
 
 // NewArchiveUploadHandler 注册分片上传支持的归档用途。

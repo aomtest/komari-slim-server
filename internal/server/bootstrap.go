@@ -6,9 +6,9 @@ import (
 	"os"
 
 	"github.com/gin-gonic/gin"
-	"github.com/komari-monitor/komari/database/dbcore"
-	"github.com/komari-monitor/komari/internal/config"
-	"github.com/komari-monitor/komari/utils"
+	"github.com/aomtest/komari-slim-server/database/dbcore"
+	"github.com/aomtest/komari-slim-server/internal/config"
+	"github.com/aomtest/komari-slim-server/utils"
 )
 
 // Bootstrap initializes the data directory, primary database, and settings.

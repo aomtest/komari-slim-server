@@ -5,11 +5,11 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/komari-monitor/komari/database/accounts"
-	"github.com/komari-monitor/komari/database/dbcore"
-	"github.com/komari-monitor/komari/database/models"
-	v2 "github.com/komari-monitor/komari/protocol/v2"
-	agent_runtime "github.com/komari-monitor/komari/web/agent"
+	"github.com/aomtest/komari-slim-server/database/accounts"
+	"github.com/aomtest/komari-slim-server/database/dbcore"
+	"github.com/aomtest/komari-slim-server/database/models"
+	v2 "github.com/aomtest/komari-slim-server/protocol/v2"
+	agent_runtime "github.com/aomtest/komari-slim-server/web/agent"
 )
 
 func GetClients(c *gin.Context) {

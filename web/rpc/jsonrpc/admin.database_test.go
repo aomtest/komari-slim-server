@@ -3,7 +3,7 @@ package jsonrpc
 import (
 	"testing"
 
-	"github.com/komari-monitor/komari/pkg/metric"
+	"github.com/aomtest/komari-slim-server/pkg/metric"
 )
 
 func TestLocalDatabaseTotalRequiresTwoKnownLocalSizes(t *testing.T) {

@@ -4,12 +4,12 @@ import (
 	"context"
 	"sync"
 
-	"github.com/komari-monitor/komari/cmd/flags"
-	"github.com/komari-monitor/komari/database/auditlog"
-	"github.com/komari-monitor/komari/database/dbcore"
-	"github.com/komari-monitor/komari/internal/metricstore"
-	"github.com/komari-monitor/komari/pkg/metric"
-	"github.com/komari-monitor/komari/pkg/rpc"
+	"github.com/aomtest/komari-slim-server/cmd/flags"
+	"github.com/aomtest/komari-slim-server/database/auditlog"
+	"github.com/aomtest/komari-slim-server/database/dbcore"
+	"github.com/aomtest/komari-slim-server/internal/metricstore"
+	"github.com/aomtest/komari-slim-server/pkg/metric"
+	"github.com/aomtest/komari-slim-server/pkg/rpc"
 )
 
 const (

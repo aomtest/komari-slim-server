@@ -9,10 +9,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/komari-monitor/komari/internal/metricstore"
-	"github.com/komari-monitor/komari/database/models"
-	appconfig "github.com/komari-monitor/komari/internal/config"
-	"github.com/komari-monitor/komari/pkg/metric"
+	"github.com/aomtest/komari-slim-server/internal/metricstore"
+	"github.com/aomtest/komari-slim-server/database/models"
+	appconfig "github.com/aomtest/komari-slim-server/internal/config"
+	"github.com/aomtest/komari-slim-server/pkg/metric"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )

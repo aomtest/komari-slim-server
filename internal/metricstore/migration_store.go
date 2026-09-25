@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/komari-monitor/komari/pkg/metric"
-	logger "github.com/komari-monitor/komari/utils/log"
+	"github.com/aomtest/komari-slim-server/pkg/metric"
+	logger "github.com/aomtest/komari-slim-server/utils/log"
 )
 
 const storeMigrationBatchSize = 500

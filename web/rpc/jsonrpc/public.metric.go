@@ -9,12 +9,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/komari-monitor/komari/database/clients"
-	"github.com/komari-monitor/komari/database/models"
-	"github.com/komari-monitor/komari/database/tasks"
-	"github.com/komari-monitor/komari/internal/metricstore"
-	"github.com/komari-monitor/komari/pkg/metric"
-	"github.com/komari-monitor/komari/pkg/rpc"
+	"github.com/aomtest/komari-slim-server/database/clients"
+	"github.com/aomtest/komari-slim-server/database/models"
+	"github.com/aomtest/komari-slim-server/database/tasks"
+	"github.com/aomtest/komari-slim-server/internal/metricstore"
+	"github.com/aomtest/komari-slim-server/pkg/metric"
+	"github.com/aomtest/komari-slim-server/pkg/rpc"
 )
 
 const defaultMetricQueryPoints = 500

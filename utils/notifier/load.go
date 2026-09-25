@@ -6,14 +6,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/komari-monitor/komari/database/clients"
-	"github.com/komari-monitor/komari/database/dbcore"
-	"github.com/komari-monitor/komari/database/models"
-	messageevent "github.com/komari-monitor/komari/database/models/messageEvent"
-	"github.com/komari-monitor/komari/database/records"
-	"github.com/komari-monitor/komari/internal/scheduler"
-	logger "github.com/komari-monitor/komari/utils/log"
-	"github.com/komari-monitor/komari/utils/messageSender"
+	"github.com/aomtest/komari-slim-server/database/clients"
+	"github.com/aomtest/komari-slim-server/database/dbcore"
+	"github.com/aomtest/komari-slim-server/database/models"
+	messageevent "github.com/aomtest/komari-slim-server/database/models/messageEvent"
+	"github.com/aomtest/komari-slim-server/database/records"
+	"github.com/aomtest/komari-slim-server/internal/scheduler"
+	logger "github.com/aomtest/komari-slim-server/utils/log"
+	"github.com/aomtest/komari-slim-server/utils/messageSender"
 )
 
 // LoadNotificationService 管理定时器和任务

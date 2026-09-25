@@ -10,12 +10,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/komari-monitor/komari/cmd/flags"
-	"github.com/komari-monitor/komari/database/models"
-	"github.com/komari-monitor/komari/internal/config"
-	"github.com/komari-monitor/komari/internal/migrations"
-	"github.com/komari-monitor/komari/internal/sqlitetune"
-	logger "github.com/komari-monitor/komari/utils/log"
+	"github.com/aomtest/komari-slim-server/cmd/flags"
+	"github.com/aomtest/komari-slim-server/database/models"
+	"github.com/aomtest/komari-slim-server/internal/config"
+	"github.com/aomtest/komari-slim-server/internal/migrations"
+	"github.com/aomtest/komari-slim-server/internal/sqlitetune"
+	logger "github.com/aomtest/komari-slim-server/utils/log"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )

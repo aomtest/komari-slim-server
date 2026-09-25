@@ -3,12 +3,12 @@ package jsonrpc
 import (
 	"context"
 
-	"github.com/komari-monitor/komari/database"
-	"github.com/komari-monitor/komari/database/models"
-	"github.com/komari-monitor/komari/internal/config"
-	"github.com/komari-monitor/komari/pkg/rpc"
-	"github.com/komari-monitor/komari/utils/messageSender"
-	msfactory "github.com/komari-monitor/komari/utils/messageSender/factory"
+	"github.com/aomtest/komari-slim-server/database"
+	"github.com/aomtest/komari-slim-server/database/models"
+	"github.com/aomtest/komari-slim-server/internal/config"
+	"github.com/aomtest/komari-slim-server/pkg/rpc"
+	"github.com/aomtest/komari-slim-server/utils/messageSender"
+	msfactory "github.com/aomtest/komari-slim-server/utils/messageSender/factory"
 )
 
 // admin.provider.go

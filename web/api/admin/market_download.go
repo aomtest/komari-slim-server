@@ -11,7 +11,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/komari-monitor/komari/internal/config"
+	"github.com/aomtest/komari-slim-server/internal/config"
 	"gorm.io/gorm"
 )
 

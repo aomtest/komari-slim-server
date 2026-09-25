@@ -4,8 +4,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/komari-monitor/komari/cmd/flags"
-	"github.com/komari-monitor/komari/database/dbcore"
+	"github.com/aomtest/komari-slim-server/cmd/flags"
+	"github.com/aomtest/komari-slim-server/database/dbcore"
 )
 
 func TestMain(m *testing.M) {

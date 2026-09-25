@@ -5,16 +5,16 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	logger "github.com/komari-monitor/komari/utils/log"
+	logger "github.com/aomtest/komari-slim-server/utils/log"
 	"math"
 	"sort"
 	"strings"
 	"time"
 
-	"github.com/komari-monitor/komari/internal/metricstore"
-	"github.com/komari-monitor/komari/database/models"
-	appconfig "github.com/komari-monitor/komari/internal/config"
-	"github.com/komari-monitor/komari/pkg/metric"
+	"github.com/aomtest/komari-slim-server/internal/metricstore"
+	"github.com/aomtest/komari-slim-server/database/models"
+	appconfig "github.com/aomtest/komari-slim-server/internal/config"
+	"github.com/aomtest/komari-slim-server/pkg/metric"
 	"gorm.io/gorm"
 )
 

@@ -13,11 +13,11 @@ import (
 	"unicode/utf8"
 
 	"github.com/gin-gonic/gin"
-	"github.com/komari-monitor/komari/database/accounts"
-	"github.com/komari-monitor/komari/database/models"
-	appconfig "github.com/komari-monitor/komari/internal/config"
-	"github.com/komari-monitor/komari/internal/metricstore"
-	"github.com/komari-monitor/komari/web/api"
+	"github.com/aomtest/komari-slim-server/database/accounts"
+	"github.com/aomtest/komari-slim-server/database/models"
+	appconfig "github.com/aomtest/komari-slim-server/internal/config"
+	"github.com/aomtest/komari-slim-server/internal/metricstore"
+	"github.com/aomtest/komari-slim-server/web/api"
 	"gorm.io/gorm"
 )
 

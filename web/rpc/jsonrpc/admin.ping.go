@@ -3,9 +3,9 @@ package jsonrpc
 import (
 	"context"
 
-	"github.com/komari-monitor/komari/database/models"
-	"github.com/komari-monitor/komari/database/tasks"
-	"github.com/komari-monitor/komari/pkg/rpc"
+	"github.com/aomtest/komari-slim-server/database/models"
+	"github.com/aomtest/komari-slim-server/database/tasks"
+	"github.com/aomtest/komari-slim-server/pkg/rpc"
 )
 
 // admin.ping.go

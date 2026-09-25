@@ -8,7 +8,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/komari-monitor/komari/utils/messageSender/factory"
+	"github.com/aomtest/komari-slim-server/utils/messageSender/factory"
 )
 
 type BarkSender struct {

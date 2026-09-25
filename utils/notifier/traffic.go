@@ -6,13 +6,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/komari-monitor/komari/database/clients"
-	"github.com/komari-monitor/komari/database/models"
-	messageevent "github.com/komari-monitor/komari/database/models/messageEvent"
-	"github.com/komari-monitor/komari/internal/config"
-	logger "github.com/komari-monitor/komari/utils/log"
-	"github.com/komari-monitor/komari/utils/messageSender"
-	agent_runtime "github.com/komari-monitor/komari/web/agent"
+	"github.com/aomtest/komari-slim-server/database/clients"
+	"github.com/aomtest/komari-slim-server/database/models"
+	messageevent "github.com/aomtest/komari-slim-server/database/models/messageEvent"
+	"github.com/aomtest/komari-slim-server/internal/config"
+	logger "github.com/aomtest/komari-slim-server/utils/log"
+	"github.com/aomtest/komari-slim-server/utils/messageSender"
+	agent_runtime "github.com/aomtest/komari-slim-server/web/agent"
 	cache "github.com/patrickmn/go-cache"
 )
 

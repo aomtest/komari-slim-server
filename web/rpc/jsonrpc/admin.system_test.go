@@ -5,7 +5,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/komari-monitor/komari/database/models"
+	"github.com/aomtest/komari-slim-server/database/models"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 	"gorm.io/gorm/schema"

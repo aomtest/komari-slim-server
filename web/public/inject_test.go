@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/komari-monitor/komari/internal/config"
+	"github.com/aomtest/komari-slim-server/internal/config"
 )
 
 // 这组测试守护一个曾经静默失效的替换：

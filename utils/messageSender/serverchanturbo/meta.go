@@ -1,7 +1,7 @@
 package serverchanturbo
 
 import (
-	"github.com/komari-monitor/komari/utils/messageSender/factory"
+	"github.com/aomtest/komari-slim-server/utils/messageSender/factory"
 )
 
 // Addition 为 Server酱 Turbo 推送通道的配置项

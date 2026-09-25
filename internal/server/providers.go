@@ -3,8 +3,8 @@ package server
 import (
 	"context"
 
-	"github.com/komari-monitor/komari/utils/geoip"
-	"github.com/komari-monitor/komari/utils/messageSender"
+	"github.com/aomtest/komari-slim-server/utils/geoip"
+	"github.com/aomtest/komari-slim-server/utils/messageSender"
 )
 
 // InitProviders initializes providers needed by the normal application.

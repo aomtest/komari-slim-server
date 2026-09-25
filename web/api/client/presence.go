@@ -4,8 +4,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/komari-monitor/komari/utils/notifier"
-	agent_runtime "github.com/komari-monitor/komari/web/agent"
+	"github.com/aomtest/komari-slim-server/utils/notifier"
+	agent_runtime "github.com/aomtest/komari-slim-server/web/agent"
 )
 
 const (

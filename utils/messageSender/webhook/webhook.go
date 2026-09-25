@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/komari-monitor/komari/utils/messageSender/factory"
-	"github.com/komari-monitor/komari/utils/messageSender/outboundhttp"
+	"github.com/aomtest/komari-slim-server/utils/messageSender/factory"
+	"github.com/aomtest/komari-slim-server/utils/messageSender/outboundhttp"
 )
 
 type WebhookSender struct {

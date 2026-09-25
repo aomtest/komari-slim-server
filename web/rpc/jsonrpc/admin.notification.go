@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/komari-monitor/komari/database/dbcore"
-	"github.com/komari-monitor/komari/database/models"
-	"github.com/komari-monitor/komari/database/notification"
-	"github.com/komari-monitor/komari/pkg/rpc"
-	"github.com/komari-monitor/komari/utils/messageSender"
+	"github.com/aomtest/komari-slim-server/database/dbcore"
+	"github.com/aomtest/komari-slim-server/database/models"
+	"github.com/aomtest/komari-slim-server/database/notification"
+	"github.com/aomtest/komari-slim-server/pkg/rpc"
+	"github.com/aomtest/komari-slim-server/utils/messageSender"
 	"gorm.io/gorm/clause"
 )
 

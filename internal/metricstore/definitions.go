@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/komari-monitor/komari/pkg/metric"
+	"github.com/aomtest/komari-slim-server/pkg/metric"
 )
 
 const defaultBuiltinMetricRetentionDays = 1
