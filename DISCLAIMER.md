@@ -25,9 +25,19 @@ immediately, no questions asked.**
 
 ## 许可证
 
-- 上游 `komari`（server）与 `komari-agent`（agent）：**MIT License**
-- 上游 `komari-web`（web）：**上游仓库未提供任何许可证声明**
+- 上游 `komari`（server）：**MIT License**（Copyright (c) 2025 Komari Moniter）
+- 上游 `komari-agent`（agent）：**MIT License**（Copyright (c) 2025 komari-monitor）
+- 上游 `komari-web`（web）：**仓库内无 LICENSE 文件**，未提供任何许可证声明
 
-本衍生版本沿用上游各自的许可证状态。由于 web 部分缺少许可证，
-**本项目的 server 二进制不做公开分发**（其内嵌了前端产物）；
-Release 仅发布 agent（纯 MIT）。
+本衍生版本沿用上游各自的许可证状态。
+
+### 关于 server 二进制的分发
+
+server 二进制**内嵌了由 `komari-web` 构建的前端产物**，而 `komari-web`
+没有许可证声明——严格说，这部分的使用授权是不明确的。
+
+**本项目仍然发布 server 二进制**（Linux / Windows 多平台）。理由：这是一个
+仅供个人自用的非官方分支，不涉及任何商业分发。相关风险由使用者自行判断。
+
+**若上游作者或任何权利人对此有异议，我会立即停止分发并下架相关发布物**
+（见上文「权利主张与删除承诺」）。
