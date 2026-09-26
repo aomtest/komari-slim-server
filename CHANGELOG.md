@@ -10,6 +10,22 @@ them — they only ever produce a compare link. So entries are written by hand.
 The release workflow extracts the section matching the pushed tag and uses it as
 the release body. A tag without a matching section fails the release on purpose.
 
+## v0.1.22 - 2026-09-27
+
+### Added
+
+- A default wallpaper for the panel. The homepage now ships with a light
+  blue-and-white background instead of a flat colour, set as the theme's own
+  default so nobody has to paste a URL to get it.
+
+  Stored as WebP at quality 95 (76 KB, against a 1.12 MB lossless source PNG)
+  and served from the theme's assets at `/assets/wallpaper-default.webp`. PSNR
+  against the original PNG is 48.59 dB.
+
+  Only the desktop default is set. The layout falls back to it on mobile, so
+  there is a single image to replace. Both settings remain overridable from the
+  theme's configuration panel.
+
 ## v0.1.21 - 2026-09-25
 
 ### Changed
