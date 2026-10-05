@@ -164,6 +164,10 @@ func publicQueryMetrics(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc
 	end := metricQueryTimeOrDefault(firstMetricQueryTime(params.End, params.EndTime), queryNow)
 	startFallback := end.Add(-metricQueryHours(params.Hours))
 	start := metricQueryTimeOrDefault(firstMetricQueryTime(params.Start, params.StartTime), startFallback)
+	// 显式传入的 start/end 不经过 metricQueryHours,只钳 hours 的话这里会被绕过:
+	// 访客传 start=1970-01-01&end=9999-12-31 即可拿到无上限的查询窗口。
+	// 因此对解析后的窗口再钳一次,与 getRecords 的 clampRecordQuery 一致。
+	start, end = clampQueryWindow(start, end)
 	if !end.After(start) {
 		return nil, rpc.MakeError(rpc.InvalidParams, "end must be after start", nil)
 	}
@@ -420,6 +424,8 @@ func publicGetPingMetricStats(ctx context.Context, req *rpc.JsonRpcRequest) (any
 	end := metricQueryTimeOrDefault(firstMetricQueryTime(params.End, params.EndTime), time.Now().UTC())
 	startFallback := end.Add(-metricQueryHours(params.Hours))
 	start := metricQueryTimeOrDefault(firstMetricQueryTime(params.Start, params.StartTime), startFallback)
+	// 同上:显式 start/end 会绕过 hours 换算,必须对解析后的窗口再钳一次。
+	start, end = clampQueryWindow(start, end)
 	if !end.After(start) {
 		return nil, rpc.MakeError(rpc.InvalidParams, "end must be after start", nil)
 	}

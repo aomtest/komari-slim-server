@@ -423,13 +423,18 @@ msg() {
             en_text='Downloading the latest %s...'
             zh_text='下载最新 %s...'
             ;;
+        # 注意:这两个文案说的是「现有版本未受影响」,不是「已从备份恢复」。
+        # 下载走的是同目录临时文件 + 原子改名,$BINARY_PATH 全程没被碰过,
+        # 所以失败时根本没有恢复动作 —— 旧文案会把用户误导成"回滚过了"。
+        # 真正会执行 mv "$backup_path" "$BINARY_PATH" 的是上面
+        # download_url_failed_* 那一对,它们的文案才是准确的。
         download_failed_log)
-            en_text='Download failed. Restoring the backup.'
-            zh_text='下载失败，正在从备份恢复。'
+            en_text='Download failed. The existing version was left untouched.'
+            zh_text='下载失败，现有版本未受影响。'
             ;;
-        download_failed_restore)
-            en_text='Download failed. The backup was restored.'
-            zh_text='下载失败，已从备份恢复。'
+        download_failed_untouched)
+            en_text='Download failed. The existing version is still in place, so nothing had to be restored.'
+            zh_text='下载失败。现有版本原样保留，未做任何改动。'
             ;;
         upgrade_success)
             en_text='Version: %s\nChannel: %s'
@@ -1319,7 +1324,7 @@ upgrade_komari() {
         rm -f "$tmp_path"
         # $BINARY_PATH 全程未被碰过，旧版本仍然完好，直接重启即可
         systemctl start ${SERVICE_NAME}.service
-        ui_msgbox "$(msg title_error)" "$(msg download_failed_restore)"
+        ui_msgbox "$(msg title_error)" "$(msg download_failed_untouched)"
         return 1
     fi
 

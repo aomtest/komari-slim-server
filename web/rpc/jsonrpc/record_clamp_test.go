@@ -118,3 +118,57 @@ func TestResolveMetricMaxPoints_StillRejectsNegative(t *testing.T) {
 		t.Fatal("negative max_points must still be rejected")
 	}
 }
+
+// public.metric 的 start/end 是显式 time.Time,不经过 hours 换算。
+// 曾经的漏洞:只钳了 metricQueryHours,显式起止直接透传,
+// 访客传 start=1970-01-01&end=9999-12-31 就能拿到无上限窗口。
+func TestClampQueryWindow_ClampsExplicitRange(t *testing.T) {
+	end := time.Date(9999, 12, 31, 23, 59, 59, 0, time.UTC)
+	start := time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC)
+
+	gotStart, gotEnd := clampQueryWindow(start, end)
+
+	if !gotEnd.Equal(end) {
+		t.Fatalf("end must not change: got %v want %v", gotEnd, end)
+	}
+	if span := gotEnd.Sub(gotStart); span != maxQueryWindow {
+		t.Fatalf("window should be clamped to %v, got %v", maxQueryWindow, span)
+	}
+}
+
+func TestClampQueryWindow_KeepsRangeWithinLimit(t *testing.T) {
+	end := time.Date(2026, 10, 5, 12, 0, 0, 0, time.UTC)
+	start := end.Add(-7 * 24 * time.Hour)
+
+	gotStart, gotEnd := clampQueryWindow(start, end)
+
+	if !gotStart.Equal(start) || !gotEnd.Equal(end) {
+		t.Fatal("a window within the limit must pass through unchanged")
+	}
+}
+
+// 反向窗口(start 晚于 end)退化为零宽,而不是保留一个负区间。
+func TestClampQueryWindow_ReversedRangeCollapses(t *testing.T) {
+	end := time.Date(2026, 10, 5, 12, 0, 0, 0, time.UTC)
+	start := end.Add(48 * time.Hour)
+
+	gotStart, gotEnd := clampQueryWindow(start, end)
+
+	if !gotStart.Equal(gotEnd) {
+		t.Fatalf("reversed range should collapse to zero width, got %v..%v", gotStart, gotEnd)
+	}
+}
+
+// clampRecordQuery 与 clampQueryWindow 必须给出相同的窗口结论,
+// 否则两个公开入口的收紧程度会不一致。
+func TestClampRecordQuery_UsesSameWindowAsClampQueryWindow(t *testing.T) {
+	end := time.Date(2026, 10, 5, 12, 0, 0, 0, time.UTC)
+	start := end.Add(-10 * 365 * 24 * time.Hour)
+
+	wStart, wEnd := clampQueryWindow(start, end)
+	rStart, rEnd, _ := clampRecordQuery(start, end, 100)
+
+	if !wStart.Equal(rStart) || !wEnd.Equal(rEnd) {
+		t.Fatalf("window clamp mismatch: window=%v..%v record=%v..%v", wStart, wEnd, rStart, rEnd)
+	}
+}

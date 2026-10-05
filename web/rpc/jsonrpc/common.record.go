@@ -33,15 +33,26 @@ const (
 	defaultRecordsPerQuery = 4000
 )
 
-// clampRecordQuery 收紧访客可控的查询参数,返回是否需要调整。
-// 窗口做钳制而非报错:图表请求超长窗口时退回最大可用范围,不破坏现有前端。
-func clampRecordQuery(startTime, endTime time.Time, maxCount int) (time.Time, time.Time, int) {
+// clampQueryWindow 把查询窗口收紧到 maxQueryWindow 之内。
+//
+// 单独抽出来是因为两个调用方的参数形态不同:getRecords 走 clampRecordQuery,
+// 而 public.metric 的 start/end 是显式传入的 time.Time,不经过 hours 换算。
+// 只钳 hours 而不钳显式起止等于没钳——访客传 start=1970-01-01&end=9999-12-31
+// 就能让服务端按数千年的窗口去查。
+func clampQueryWindow(startTime, endTime time.Time) (time.Time, time.Time) {
 	if endTime.Sub(startTime) > maxQueryWindow {
 		startTime = endTime.Add(-maxQueryWindow)
 	}
 	if startTime.After(endTime) {
 		startTime = endTime
 	}
+	return startTime, endTime
+}
+
+// clampRecordQuery 收紧访客可控的查询参数,返回是否需要调整。
+// 窗口做钳制而非报错:图表请求超长窗口时退回最大可用范围,不破坏现有前端。
+func clampRecordQuery(startTime, endTime time.Time, maxCount int) (time.Time, time.Time, int) {
+	startTime, endTime = clampQueryWindow(startTime, endTime)
 	// -1 表示不限制,直接收到上限;过大的值同样收到上限。
 	if maxCount == -1 || maxCount > maxRecordsPerQuery {
 		maxCount = maxRecordsPerQuery
