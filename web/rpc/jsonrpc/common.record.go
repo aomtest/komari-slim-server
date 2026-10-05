@@ -17,6 +17,38 @@ func init() {
 	Register("getRecords", getRecords)
 }
 
+const (
+	// maxQueryWindow 是单次记录查询允许的最大时间窗口。
+	// 该接口对访客开放(common:* 授予 RoleGuest),此前 hours/start/end 都没有上限。
+	// 内置指标默认保留期仅 1 天,即使把保留期调大也不会超过一年,366 天足够覆盖
+	// 任何真实配置,同时把"从 1970 查到 9999 年"这类查询挡在门外。
+	maxQueryWindow = 366 * 24 * time.Hour
+
+	// maxRecordsPerQuery 是单次查询返回/降采样的最大点数。
+	// maxCount 允许传 -1 表示"不限制",而 uuid 为空时会遍历全部节点,
+	// 两者叠加会让一次请求把整张表读进内存再排序。
+	maxRecordsPerQuery = 10000
+
+	// defaultRecordsPerQuery 是未显式指定 maxCount 时的默认点数。
+	defaultRecordsPerQuery = 4000
+)
+
+// clampRecordQuery 收紧访客可控的查询参数,返回是否需要调整。
+// 窗口做钳制而非报错:图表请求超长窗口时退回最大可用范围,不破坏现有前端。
+func clampRecordQuery(startTime, endTime time.Time, maxCount int) (time.Time, time.Time, int) {
+	if endTime.Sub(startTime) > maxQueryWindow {
+		startTime = endTime.Add(-maxQueryWindow)
+	}
+	if startTime.After(endTime) {
+		startTime = endTime
+	}
+	// -1 表示不限制,直接收到上限;过大的值同样收到上限。
+	if maxCount == -1 || maxCount > maxRecordsPerQuery {
+		maxCount = maxRecordsPerQuery
+	}
+	return startTime, endTime, maxCount
+}
+
 func getRecords(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc.JsonRpcError) {
 	meta := rpc.MetaFromContext(ctx)
 	var params struct {
@@ -57,9 +89,17 @@ func getRecords(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc.JsonRpc
 		if hours <= 0 {
 			hours = 1 // default 1 hour
 		}
+		// 先把 hours 收进窗口上限,避免 time.Duration(hours)*time.Hour 溢出 int64
+		// (超过约 292 年就会溢出),同时把超大窗口挡在外面。
+		if maxHours := int(maxQueryWindow / time.Hour); hours > maxHours {
+			hours = maxHours
+		}
 		endTime = time.Now().UTC()
 		startTime = endTime.Add(-time.Duration(hours) * time.Hour)
 	}
+
+	// 收紧窗口与点数上限:该接口对访客开放,此前两者都没有上限。
+	startTime, endTime, params.MaxCount = clampRecordQuery(startTime, endTime, params.MaxCount)
 
 	// Hidden filtering for non-admin
 	isAdmin := meta.Principal != nil && meta.Principal.HasRole(rpc.RoleAdmin)
@@ -101,7 +141,7 @@ func getRecords(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc.JsonRpc
 		// resolve maxCount default for load
 		maxCount := params.MaxCount
 		if maxCount == 0 {
-			maxCount = 4000
+			maxCount = defaultRecordsPerQuery
 		}
 
 		// optional load_type filtering -> group by client
@@ -384,7 +424,7 @@ func getRecords(ctx context.Context, req *rpc.JsonRpcRequest) (any, *rpc.JsonRpc
 		// apply maxCount for ping
 		maxCount := params.MaxCount
 		if maxCount == 0 {
-			maxCount = 4000
+			maxCount = defaultRecordsPerQuery
 		}
 		if maxCount != -1 && len(response.Records) > maxCount {
 			// group records by TaskId for proportional downsampling

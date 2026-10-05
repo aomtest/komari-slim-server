@@ -22,6 +22,10 @@ type LoginRequest struct {
 
 const sessionCookieMaxAge = 2592000
 
+// maxLoginBodyBytes 限制登录请求体大小。登录请求只含三个短字段,
+// 4 KiB 已绰绰有余;此前为无上限读取。
+const maxLoginBodyBytes = 4 << 10
+
 func setSessionCookie(c *gin.Context, value string, maxAge int) {
 	http.SetCookie(c.Writer, &http.Cookie{
 		Name:     "session_token",
@@ -41,7 +45,8 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	bodyBytes, err := io.ReadAll(c.Request.Body)
+	// 登录请求体只有用户名/密码/2FA 码,限制上限避免超大 body 占用内存。
+	bodyBytes, err := io.ReadAll(io.LimitReader(c.Request.Body, maxLoginBodyBytes))
 	if err != nil {
 		api.RespondError(c, http.StatusBadRequest, "Invalid request body: "+err.Error())
 		return
@@ -82,7 +87,9 @@ func Login(c *gin.Context) {
 	}
 	setSessionCookie(c, session, sessionCookieMaxAge)
 	auditlog.Log(c.ClientIP(), uuid, "logged in (password)", "login")
-	api.RespondSuccess(c, gin.H{"set-cookie": gin.H{"session_token": session}})
+	// 不再把 session token 回显到 JSON 响应体:该字段前端从未消费,
+	// 而回显会让任何能执行 JS 的地方(例如主题的 custom_head)绕过 HttpOnly 拿到凭据。
+	api.RespondSuccess(c, nil)
 }
 func Logout(c *gin.Context) {
 	session, _ := c.Cookie("session_token")

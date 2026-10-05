@@ -79,7 +79,13 @@ func Bind(method string, opts ...BindOption) gin.HandlerFunc {
 func assembleParams(c *gin.Context, cfg *bindConfig) (any, bool) {
 	var bodyVal any
 	if c.Request.Body != nil {
-		if raw, err := io.ReadAll(c.Request.Body); err == nil && len(raw) > 0 {
+		// 限长读取:该装配路径被 jsonRpc.Bind 的所有路由共用,其中包含公开路由
+		// (例如 /api/records/load),因此对匿名请求也可达。
+		raw, err := io.ReadAll(io.LimitReader(c.Request.Body, maxRPCBodyBytes+1))
+		if err == nil && len(raw) > 0 {
+			if len(raw) > maxRPCBodyBytes {
+				return nil, false
+			}
 			if err := json.Unmarshal(raw, &bodyVal); err != nil {
 				return nil, false
 			}

@@ -10,6 +10,10 @@ import (
 	"github.com/aomtest/komari-slim-server/database/accounts"
 )
 
+// maxSensitive2FABodyBytes 限制为提取 2FA 码而扫描的请求体大小。
+// 2FA 码是 6 位数字,请求体其余字段也很小,4 KiB 足够。
+const maxSensitive2FABodyBytes = 4 << 10
+
 func RequireSensitive2FA() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if err := VerifySensitive2FA(c); err != nil {
@@ -81,11 +85,17 @@ func get2FACode(c *gin.Context) string {
 	if c.Request.Body == nil || c.Request.Method == http.MethodGet {
 		return ""
 	}
-	bodyBytes, err := io.ReadAll(c.Request.Body)
+	// 只为找 2FA 码而读 body,限长避免超大请求体占用内存。
+	// 多读 1 字节用于判断是否超限;已消费部分与剩余部分拼回去,保证下游 handler
+	// 仍能读到完整请求体。
+	bodyBytes, err := io.ReadAll(io.LimitReader(c.Request.Body, maxSensitive2FABodyBytes+1))
 	if err != nil {
 		return ""
 	}
-	c.Request.Body = io.NopCloser(bytes.NewReader(bodyBytes))
+	c.Request.Body = io.NopCloser(io.MultiReader(bytes.NewReader(bodyBytes), c.Request.Body))
+	if len(bodyBytes) > maxSensitive2FABodyBytes {
+		return ""
+	}
 	if len(bodyBytes) == 0 {
 		return ""
 	}

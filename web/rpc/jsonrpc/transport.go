@@ -118,10 +118,20 @@ func serveWebSocket(c *gin.Context) {
 	}
 }
 
+// maxRPCBodyBytes 限制 JSON-RPC 请求体大小。
+// /api/rpc2 的 POST 与 jsonRpc.Bind 的参数装配此前都是无上限 io.ReadAll,
+// 而这两条路径对匿名请求同样可达,超大 POST 即可打爆内存。
+// 1 MiB 足以容纳后台设置里较大的 HTML 字段(custom_head/custom_body)。
+const maxRPCBodyBytes = 1 << 20
+
 func servePost(c *gin.Context) {
-	body, err := io.ReadAll(c.Request.Body)
+	body, err := io.ReadAll(io.LimitReader(c.Request.Body, maxRPCBodyBytes+1))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, rpc.ErrorResponse(nil, rpc.ParseError, "read body error", err.Error()))
+		return
+	}
+	if len(body) > maxRPCBodyBytes {
+		c.JSON(http.StatusRequestEntityTooLarge, rpc.ErrorResponse(nil, rpc.InvalidRequest, "request body too large", ""))
 		return
 	}
 	requests, jerr := rpc.ParseRequests(body)

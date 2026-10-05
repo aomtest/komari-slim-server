@@ -24,6 +24,9 @@ func GetClients(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "error": "Failed to upgrade to WebSocket." + err.Error()})
 		return
 	}
+	// 该端点是匿名可访问的,只接受 "get" 之类的短指令,
+	// 收紧到 PublicWSReadLimit(升级器默认给的是 1 MiB)。
+	conn.GetConn().SetReadLimit(PublicWSReadLimit)
 	defer conn.Close()
 
 	// 初始化用户信息
@@ -33,8 +36,11 @@ func GetClients(c *gin.Context) {
 		session, _ = c.Cookie("session_token")
 	)
 
-	// 登录状态检查
-	_, err = accounts.GetUserBySession(session)
+	// 登录状态检查。
+	// 必须用 GetSession:它会校验 Expires,而 GetUserBySession 完全不检查过期,
+	// 会让已过期的 cookie 在每 30 分钟一次的清理任务跑之前仍然通过登录判定,
+	// 从而看到被隐藏的节点。
+	_, err = accounts.GetSession(session)
 	if err == nil {
 		isLogin = true
 	}

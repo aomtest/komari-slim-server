@@ -457,6 +457,9 @@ func publicGetPingMetricStats(ctx context.Context, req *rpc.JsonRpcRequest) (any
 	if maxPoints <= 0 {
 		maxPoints = defaultMetricQueryPoints
 	}
+	if maxPoints > maxMetricQueryPoints {
+		maxPoints = maxMetricQueryPoints
+	}
 	now := time.Now().UTC()
 	interval := metricDownsampleInterval(end.Sub(start), maxPoints)
 	interval = store.CompatibleSeriesInterval(start, now, interval)
@@ -710,8 +713,17 @@ func metricQueryHours(hours float64) time.Duration {
 	if hours <= 0 {
 		return 4 * time.Hour
 	}
+	// 与 getRecords 使用同一个窗口上限:该接口对访客开放,此前 hours 没有上限。
+	// 先钳制 hours 再转换,避免 float64 → time.Duration 溢出。
+	if maxHours := float64(maxQueryWindow / time.Hour); hours > maxHours {
+		hours = maxHours
+	}
 	return time.Duration(hours * float64(time.Hour))
 }
+
+// maxMetricQueryPoints 是单条序列允许的最大返回点数。
+// 此前 max_points 只校验了必须为正整数,没有上界。
+const maxMetricQueryPoints = 5000
 
 func resolveMetricMaxPoints(metricKey string, params publicMetricQueryParams) (int, error) {
 	maxPoints := params.MaxPoints
@@ -726,6 +738,9 @@ func resolveMetricMaxPoints(metricKey string, params publicMetricQueryParams) (i
 	}
 	if maxPoints <= 0 {
 		return 0, fmt.Errorf("max points for %s must be a positive integer", metricKey)
+	}
+	if maxPoints > maxMetricQueryPoints {
+		maxPoints = maxMetricQueryPoints
 	}
 	return maxPoints, nil
 }

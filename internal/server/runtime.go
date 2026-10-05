@@ -81,7 +81,22 @@ func (a *App) BuildRouter() error {
 
 // Run starts the normal HTTP server and blocks until shutdown or fatal error.
 func (a *App) Run() error {
-	a.server = &http.Server{Addr: a.listenAddr, Handler: a.engine}
+	// 超时是抵御 Slowloris 与慢速请求体攻击的基础手段;此前除默认值外完全未设置,
+	// 半开连接可以长期占用 goroutine 与文件描述符。
+	//
+	// WebSocket 不受 ReadTimeout/WriteTimeout 影响:gorilla 在 Upgrade 时会调用
+	// netConn.SetDeadline(time.Time{}) 清空读写 deadline,之后由各端点自行管理
+	// (例如 agent v2 端点用 SetReadDeadline 做读超时)。
+	// 分片上传与 v2 长轮询的等待时间均远小于 WriteTimeout,故不需要单独放宽。
+	a.server = &http.Server{
+		Addr:              a.listenAddr,
+		Handler:           a.engine,
+		ReadHeaderTimeout: 10 * time.Second,
+		ReadTimeout:       60 * time.Second,
+		WriteTimeout:      120 * time.Second,
+		IdleTimeout:       120 * time.Second,
+		MaxHeaderBytes:    64 << 10,
+	}
 	serverErr := make(chan error, 1)
 	logger.Infof("server", "Starting server on %s ...", a.listenAddr)
 	go func() {

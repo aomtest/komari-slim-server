@@ -39,6 +39,13 @@ func CreateSession(uuid string, expires int, userAgent, ip, login_method string)
 		LoginMethod:  login_method,
 		LatestOnline: time.Now().UTC(),
 	}
+	err := db.Create(&sessionRecord).Error
+	if err != nil {
+		return "", err
+	}
+
+	// 只有会话确实写入成功之后才发登录通知。此前该 goroutine 在写入之前启动,
+	// 写入失败时同样会发出登录通知,造成"没登录成功却收到登录提醒"。
 	go func() {
 		LoginNotification, _ := config.GetAs[bool](config.LoginNotificationKey, false)
 		if LoginNotification {
@@ -57,10 +64,6 @@ func CreateSession(uuid string, expires int, userAgent, ip, login_method string)
 		}
 	}()
 
-	err := db.Create(&sessionRecord).Error
-	if err != nil {
-		return "", err
-	}
 	return session, nil
 }
 

@@ -557,13 +557,24 @@ func UpdateTheme(c *gin.Context) {
 	// 3. 用户提供的新URL下载
 	// 4. 用户提供的GitHub仓库信息，获取最新release下载
 
-	// 临时文件名
-	tempFile := filepath.Join(os.TempDir(), "downloaded_theme.zip")
-	if err := os.WriteFile(tempFile, themeData, 0644); err != nil {
+	// 临时文件:用 CreateTemp 生成唯一文件名(0600 权限),避免并发安装互相覆盖,
+	// 也避免共享 /tmp 上的符号链接攻击。此前是固定的 downloaded_theme.zip。
+	tmp, err := os.CreateTemp("", "downloaded_theme-*.zip")
+	if err != nil {
+		api.RespondError(c, http.StatusInternalServerError, "创建临时文件失败: "+err.Error())
+		return
+	}
+	tempFile := tmp.Name()
+	defer os.Remove(tempFile)
+	if _, err := tmp.Write(themeData); err != nil {
+		tmp.Close()
 		api.RespondError(c, http.StatusInternalServerError, "保存文件失败: "+err.Error())
 		return
 	}
-	defer os.Remove(tempFile)
+	if err := tmp.Close(); err != nil {
+		api.RespondError(c, http.StatusInternalServerError, "保存文件失败: "+err.Error())
+		return
+	}
 
 	// 解压ZIP文件并验证
 	updatedThemeInfo, err := extractAndValidateTheme(tempFile)
@@ -678,13 +689,23 @@ func ImportTheme(c *gin.Context) {
 		return
 	}
 
-	// 保存到临时文件
-	tempFile := filepath.Join(os.TempDir(), "import_theme.zip")
-	if err := os.WriteFile(tempFile, themeData, 0644); err != nil {
+	// 保存到临时文件:同上,使用唯一文件名避免并发覆盖与符号链接攻击。
+	tmp, err := os.CreateTemp("", "import_theme-*.zip")
+	if err != nil {
+		api.RespondError(c, http.StatusInternalServerError, "创建临时文件失败: "+err.Error())
+		return
+	}
+	tempFile := tmp.Name()
+	defer os.Remove(tempFile)
+	if _, err := tmp.Write(themeData); err != nil {
+		tmp.Close()
 		api.RespondError(c, http.StatusInternalServerError, "保存文件失败: "+err.Error())
 		return
 	}
-	defer os.Remove(tempFile)
+	if err := tmp.Close(); err != nil {
+		api.RespondError(c, http.StatusInternalServerError, "保存文件失败: "+err.Error())
+		return
+	}
 
 	// preview模式：仅解析并返回主题信息
 	preview := c.Query("preview")

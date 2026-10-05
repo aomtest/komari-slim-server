@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"encoding/json"
+	"fmt"
 	logger "github.com/aomtest/komari-slim-server/utils/log"
 	"io"
 	"net/http"
@@ -20,6 +21,11 @@ import (
 	"github.com/aomtest/komari-slim-server/web/connection"
 )
 
+// maxDecompressedBodyBytes 限制 agent 上报体(解压后)的大小。
+// 此前对 gzip 请求体做无上限解压:一个极小的压缩请求即可把服务端内存撑爆
+// (解压炸弹)。4 MiB 远大于任何真实上报体。
+const maxDecompressedBodyBytes = 4 << 20
+
 func readMaybeCompressedBody(r *http.Request) ([]byte, error) {
 	defer r.Body.Close()
 	if strings.EqualFold(r.Header.Get("Content-Encoding"), "gzip") {
@@ -28,9 +34,22 @@ func readMaybeCompressedBody(r *http.Request) ([]byte, error) {
 			return nil, err
 		}
 		defer zr.Close()
-		return io.ReadAll(zr)
+		return readBounded(zr)
 	}
-	return io.ReadAll(r.Body)
+	return readBounded(r.Body)
+}
+
+// readBounded 读取上限为 maxDecompressedBodyBytes。超限时返回错误而不是截断,
+// 避免把不完整的 JSON 交给调用方去解析。
+func readBounded(rd io.Reader) ([]byte, error) {
+	data, err := io.ReadAll(io.LimitReader(rd, maxDecompressedBodyBytes+1))
+	if err != nil {
+		return nil, err
+	}
+	if len(data) > maxDecompressedBodyBytes {
+		return nil, fmt.Errorf("request body exceeds %d bytes", maxDecompressedBodyBytes)
+	}
+	return data, nil
 }
 
 func bindV2Params[T any](raw any, target *T) error {
@@ -129,6 +148,7 @@ func WebSocketV2RPC(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "error": "Failed to upgrade to WebSocket." + err.Error()})
 		return
 	}
+	// agent 上报体较大,沿用升级器默认的 DefaultWSReadLimit(1 MiB)。
 	defer conn.Close()
 
 	uuid, ok := clientUUIDFromContext(c)

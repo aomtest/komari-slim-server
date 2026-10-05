@@ -23,6 +23,11 @@ const (
 	RoleGuest  = "guest"
 )
 
+// maxTokenScanBytes 限制 extractClientToken 为寻找 body token 而读取的字节数。
+// 该函数对匿名请求也会执行,此前无上限读取请求体,攻击者可用超大 POST 打爆内存。
+// 正常携带 token 的请求体只有几十字节,64 KiB 留有充分余量。
+const maxTokenScanBytes = 64 << 10
+
 // IdentityMiddleware 统一身份识别中间件，在路由栈最外层运行。
 // 负责识别当前请求者身份（Admin / Client / Guest），并写入 Context。
 // 身份识别统一委托给 IdentifyPrincipal;同时保留旧的 c.Set 键(role/uuid/
@@ -174,11 +179,20 @@ func extractClientToken(c *gin.Context) string {
 	}
 
 	if c.Request.Method != http.MethodGet {
-		bodyBytes, err := io.ReadAll(c.Request.Body)
+		// 只读前 maxTokenScanBytes+1 字节:多读 1 字节用于判断是否超限。
+		bodyBytes, err := io.ReadAll(io.LimitReader(c.Request.Body, maxTokenScanBytes+1))
 		if err != nil {
 			return ""
 		}
-		c.Request.Body = io.NopCloser(bytes.NewReader(bodyBytes))
+		// 把已消费的字节与剩余部分拼回去,保证下游 handler 仍能读到完整请求体。
+		// 这里必须用 MultiReader 而不是直接用 bodyBytes,否则大请求体会被截断。
+		c.Request.Body = io.NopCloser(io.MultiReader(bytes.NewReader(bodyBytes), c.Request.Body))
+
+		// 请求体超过扫描上限:不做 body token 识别直接放弃。
+		// 正常携带 token 的请求远小于该上限,因此不影响任何合法客户端。
+		if len(bodyBytes) > maxTokenScanBytes {
+			return ""
+		}
 
 		var bodyMap map[string]interface{}
 		if len(bodyBytes) > 0 {
