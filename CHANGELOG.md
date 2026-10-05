@@ -10,6 +10,31 @@ them — they only ever produce a compare link. So entries are written by hand.
 The release workflow extracts the section matching the pushed tag and uses it as
 the release body. A tag without a matching section fails the release on purpose.
 
+## v0.1.24 - 2026-10-06
+
+### Fixed
+
+- `public.metric` queries could still be given an unbounded time window.
+  v0.1.23 bounded the window by clamping `metricQueryHours()`, but that function
+  is only reached when the caller passes `hours`. Passing `start`/`end` (or
+  `start_time`/`end_time`) explicitly skipped it entirely, so a guest could ask
+  for 1970-01-01 through 9999-12-31 and have the server query across millennia.
+  `getRecords` clamped the *resolved* window in the same release, so the two
+  public entry points disagreed; they now share one implementation.
+
+- The upgrade dialog claimed the previous version had been restored from backup
+  after a failed download. It had not. Downloads go to a sibling temp file and
+  are renamed into place atomically, so the live binary is never touched and
+  there is nothing to restore. The message now says the existing version was
+  left untouched. (The separate path where the download *URL* cannot be resolved
+  does restore from the backup, and its wording was already accurate.)
+
+### Internal
+
+- `clampQueryWindow` is now shared by `getRecords` and `public.metric`. Tests
+  cover the explicit-range bypass, a reversed range, and that both entry points
+  reach the same conclusion for the same input.
+
 ## v0.1.23 - 2026-10-05
 
 ### Security
