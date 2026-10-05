@@ -191,6 +191,10 @@ msg() {
             en_text='Snapshot release (latest changes)'
             zh_text='快照版（最新功能）'
             ;;
+        channel_prerelease)
+            en_text='Prerelease build (from the prerelease branch, for testing)'
+            zh_text='预发布版（prerelease 分支构建，供实机测试）'
+            ;;
         channel_name_stable)
             en_text='stable'
             zh_text='正式版'
@@ -198,6 +202,10 @@ msg() {
         channel_name_snapshot)
             en_text='snapshot'
             zh_text='快照版'
+            ;;
+        channel_name_prerelease)
+            en_text='prerelease'
+            zh_text='预发布版'
             ;;
         selected_channel)
             en_text='Selected channel: %s'
@@ -314,6 +322,14 @@ msg() {
         snapshot_found)
             en_text='Latest snapshot: %s'
             zh_text='最新快照版本：%s'
+            ;;
+        fetch_prerelease)
+            en_text='Checking the latest prerelease build...'
+            zh_text='正在检查最新预发布版本...'
+            ;;
+        prerelease_not_found)
+            en_text='No prerelease build is available yet. Push to the prerelease branch first.'
+            zh_text='暂无预发布版本，请先向 prerelease 分支推送代码。'
             ;;
         download_failed)
             en_text='Download failed. Check your network connection.'
@@ -794,9 +810,14 @@ select_channel() {
 
     choice=$(ui_menu "$(msg channel_title)" "$(msg channel_prompt)" \
         "1" "$(msg channel_stable)" \
-        "2" "$(msg channel_snapshot)")
+        "2" "$(msg channel_snapshot)" \
+        "3" "$(msg channel_prerelease)")
 
     case "$choice" in
+        prerelease|3)
+            CHANNEL="prerelease"
+            CHANNEL_NAME="$(msg channel_name_prerelease)"
+            ;;
         snapshot|2)
             CHANNEL="snapshot"
             CHANNEL_NAME="$(msg channel_name_snapshot)"
@@ -897,10 +918,29 @@ get_download_url() {
     local arch=$1
     local file_name="komari-linux-${arch}"
 
-    if [ "$CHANNEL" = "snapshot" ]; then
+    if [ "$CHANNEL" = "prerelease" ]; then
+        # 预发布通道：固定指向滚动 release（tag 固定为 prerelease）。
+        # 该 release 的资产由 .github/workflows/prerelease.yml 在每次 push 到
+        # prerelease 分支时覆盖，所以这里不必查 API，直接拼固定 URL。
+        log_info "$(msg fetch_prerelease)" >&2
+        local url="https://github.com/${REPO}/releases/download/prerelease/${file_name}"
+        # 先探测资产是否存在。否则在预发布通道尚未产出构建时，用户看到的是
+        # "下载失败，请检查网络连接"，会把"还没构建"误导成网络故障。
+        if ! curl -fsSLI --max-time 30 -o /dev/null "$url" 2>/dev/null; then
+            log_error "$(msg prerelease_not_found)" >&2
+            return 1
+        fi
+        echo "$url"
+    elif [ "$CHANNEL" = "snapshot" ]; then
         # 获取最新的预发布版本（不再限定 Snapshot- 前缀）
         log_info "$(msg fetch_snapshot)" >&2
-        local latest_snapshot=$(curl -s "https://api.github.com/repos/${REPO}/releases" | grep '"tag_name"' | head -1 | sed -e 's/.*"tag_name": *"//' -e 's/".*//')
+        # 排除滚动 prerelease release：它的 tag 也叫 prerelease，不排除的话
+        # 快照通道会和预发布通道下载到同一个构建。
+        local latest_snapshot=$(curl -s "https://api.github.com/repos/${REPO}/releases" \
+            | grep '"tag_name"' \
+            | sed -e 's/.*"tag_name": *"//' -e 's/".*//' \
+            | grep -v '^prerelease$' \
+            | head -1)
 
         if [ -z "$latest_snapshot" ]; then
             log_error "$(msg snapshot_not_found)" >&2

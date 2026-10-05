@@ -1,0 +1,178 @@
+name: Prerelease
+
+# 把 prerelease 分支的最新构建发布到一个**滚动 release**（tag 固定为 `prerelease`），
+# 供 install-komari-slim.sh 的「预发布版」通道下载，用于在实机上验证尚未发版的改动。
+#
+# 与 release.yml 的差别（都是刻意的）：
+#   - 不校验 CHANGELOG.md：这是滚动测试通道，不面向正式发版；
+#   - tag 固定为 `prerelease` 且标记为 prerelease，因此 releases/latest 不受影响，
+#     正式版通道仍然指向真正的稳定版本；
+#   - 只构建 Linux 目标：安装脚本是 Linux 专用的（detect_arch 只认
+#     amd64/arm64/386/riscv64/loong64），Windows 资产在这个通道没有消费方，
+#     少构建 3 个 job 能明显缩短等待时间。
+#
+# 资产会被后续 push 覆盖，因此同一 tag 下永远是 prerelease 分支的最新构建。
+run-name: Prerelease ${{ github.sha }}
+
+on:
+  push:
+    branches: [prerelease]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # 必须与 install-komari-slim.sh 的 detect_arch() 对齐：
+        # 该函数接受 amd64 / arm64 / 386 / riscv64 / loong64，
+        # 拼出的资产名是 komari-linux-<arch>。少构建某个架构，
+        # 对应机器上跑安装脚本就会 404。
+        include:
+          - goarch: amd64
+            target: x86_64-linux-musl
+            binary: komari-linux-amd64
+          - goarch: arm64
+            target: aarch64-linux-musl
+            binary: komari-linux-arm64
+          - goarch: '386'
+            target: x86-linux-musl
+            binary: komari-linux-386
+          - goarch: riscv64
+            target: riscv64-linux-musl
+            binary: komari-linux-riscv64
+          - goarch: loong64
+            target: loongarch64-linux-musl
+            binary: komari-linux-loong64
+    steps:
+      - name: Checkout server
+        uses: actions/checkout@v7
+        with:
+          path: server
+
+      - name: Checkout web
+        uses: actions/checkout@v7
+        with:
+          repository: ${{ github.repository_owner }}/komari-slim-web
+          path: web
+
+      - name: Setup Go
+        uses: actions/setup-go@v7
+        with:
+          go-version: '1.27'
+          # 与 release.yml 同理：server 被检出到 server/ 子目录，
+          # setup-go 默认在仓库根目录找 go.sum，找不到会让缓存失效。
+          cache: true
+          cache-dependency-path: server/go.sum
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+
+      # 与 release.yml 保持一致：手工安装 zig，避免 setup-zig action 的 Node 20 弃用告警。
+      - name: Install Zig 0.14.0
+        run: |
+          set -euo pipefail
+          ZIG_VER=0.14.0
+          # 0.14.0 用的是旧命名 zig-linux-x86_64-<ver>.tar.xz，
+          # 新的 zig-<arch>-linux-<ver>.tar.xz 对 0.14.0 会 404（已实测）。
+          curl -fsSL -o /tmp/zig.tar.xz \
+            "https://ziglang.org/download/${ZIG_VER}/zig-linux-x86_64-${ZIG_VER}.tar.xz"
+          mkdir -p "$HOME/zig"
+          tar -xJf /tmp/zig.tar.xz -C "$HOME/zig" --strip-components=1
+          echo "$HOME/zig" >> "$GITHUB_PATH"
+          "$HOME/zig/zig" version
+
+      - name: Install zstd
+        run: sudo apt-get update && sudo apt-get install -y zstd
+
+      - name: Build frontend
+        working-directory: ./web
+        run: |
+          npm ci
+          npm run build
+          mkdir -p "${{ github.workspace }}/server/web/public/defaultTheme"
+          tar -cf "${{ github.workspace }}/server/web/public/defaultTheme/dist.tar" -C dist .
+          zstd -19 -T0 -q -f "${{ github.workspace }}/server/web/public/defaultTheme/dist.tar" -o "${{ github.workspace }}/server/web/public/defaultTheme/dist.tar.zst"
+          rm -f "${{ github.workspace }}/server/web/public/defaultTheme/dist.tar"
+          cp -f komari-theme.json "${{ github.workspace }}/server/web/public/defaultTheme/komari-theme.json"
+          if [ -f preview.webp ]; then cp -f preview.webp "${{ github.workspace }}/server/web/public/defaultTheme/preview.webp"; fi
+
+      # 单独下载依赖并重试：5 个矩阵 job 各自下载一遍，
+      # 任何一个撞上 proxy.golang.org 的瞬时中断都会让整个通道失败。
+      - name: Download Go modules (with retry)
+        working-directory: ./server
+        env:
+          GOPROXY: https://proxy.golang.org,https://goproxy.io,direct
+        run: |
+          for i in 1 2 3 4 5; do
+            if go mod download; then
+              echo "依赖下载完成（第 $i 次尝试）"
+              exit 0
+            fi
+            echo "::warning::go mod download 第 $i 次失败，10 秒后重试"
+            sleep 10
+          done
+          echo "::error::go mod download 连续 5 次失败"
+          exit 1
+
+      - name: Build binary
+        working-directory: ./server
+        env:
+          GOOS: linux
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: 1
+          CC: zig cc -target ${{ matrix.target }}
+          GOPROXY: https://proxy.golang.org,https://goproxy.io,direct
+        run: |
+          H="${GITHUB_SHA::7}"
+          # 版本号带上短哈希：实机验证时能从界面上确认跑的是哪一次构建。
+          # 同时 versionID 每次变化会触发一次 ./data 自动备份，便于回滚。
+          VERSION="prerelease-${H}"
+          go build -trimpath -ldflags="-s -w -X github.com/aomtest/komari-slim-server/utils.CurrentVersion=${VERSION} -X github.com/aomtest/komari-slim-server/utils.VersionHash=${H}" -o "build/${{ matrix.binary }}" .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.binary }}
+          path: server/build/${{ matrix.binary }}
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download artifacts
+        # 与 release.yml 一致：停在 v7，v8 改了下载行为会破坏下面的拍平逻辑。
+        uses: actions/download-artifact@v7
+        with:
+          path: artifacts
+
+      - name: Flatten artifacts
+        run: |
+          mkdir -p release
+          find artifacts -type f -exec cp {} release/ \;
+          ls -la release/
+
+      - name: Publish rolling prerelease
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: prerelease
+          name: Prerelease (rolling)
+          prerelease: true
+          body: |
+            由 `prerelease` 分支自动构建发布，**不是正式版本，请勿用于生产环境**。
+
+            - 提交：`${{ github.sha }}`
+            - 构建序号：${{ github.run_number }}
+
+            该 release 的资产会在每次 push 到 `prerelease` 分支时被覆盖，
+            因此同一链接始终指向最新构建。
+
+            安装方式：运行 `install-komari-slim.sh`，在「选择发布通道」时选
+            **预发布版**。
+          files: release/*
