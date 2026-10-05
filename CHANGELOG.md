@@ -10,6 +10,95 @@ them — they only ever produce a compare link. So entries are written by hand.
 The release workflow extracts the section matching the pushed tag and uses it as
 the release body. A tag without a matching section fails the release on purpose.
 
+## v0.1.23 - 2026-10-05
+
+### Security
+
+- Bounded every request-body read that was previously unlimited. The most
+  exposed one was `extractClientToken`, which runs on **every** non-GET request
+  including anonymous ones and read the entire body into memory before deciding
+  whether it held a token — so one large POST could exhaust the process. It now
+  reads at most 64 KiB and splices the consumed prefix back with `io.MultiReader`
+  so downstream handlers still receive the complete body. The same treatment
+  went to the login handler, the sensitive-operation 2FA scan, the `/api/rpc2`
+  POST handler and the `jsonRpc.Bind` parameter assembly; the last two are
+  reachable anonymously as well.
+
+- Fixed a decompression bomb in the agent report endpoint.
+  `readMaybeCompressedBody` gunzipped the body with no output limit, so a few
+  hundred kilobytes of compressed input could expand into hundreds of megabytes
+  of memory. Decompressed output is now capped at 4 MiB, and oversized input is
+  **rejected** rather than truncated so an incomplete JSON document is never
+  handed to the parser.
+
+- Added the timeouts `http.Server` never had. `ReadHeaderTimeout`, `ReadTimeout`,
+  `WriteTimeout`, `IdleTimeout` and `MaxHeaderBytes` were all unset, leaving
+  slow-request attacks and half-open connections able to hold goroutines and
+  file descriptors indefinitely. WebSocket connections are unaffected: gorilla
+  clears the deadlines the HTTP server sets, during `Upgrade`.
+
+- Added a per-frame size limit to all three WebSocket endpoints, which gorilla
+  leaves unlimited by default. `UpgradeWebSocket` now applies 1 MiB, and the
+  anonymously reachable `/api/clients` tightens that to 64 KiB.
+
+- Bounded the public query surface. `getRecords` is granted to guests through
+  `common:*` and accepted an unbounded time window plus `maxCount=-1` meaning
+  "no limit"; the window is now clamped to 366 days and the point count to
+  10000. The same clamps apply to `public.metric`'s `hours` and `max_points`.
+  JSON-RPC batches had no length limit despite being dispatched serially, so a
+  single request could amplify into hundreds of queries; batches now cap at 20.
+
+### Fixed
+
+- An expired session still passed the login check on `/api/clients`. That
+  endpoint called `GetUserBySession`, which never looks at `Expires`, unlike
+  `GetSession`. Until the 30-minute cleanup task happened to run, an expired
+  cookie could still see nodes the operator had hidden.
+
+- A failed login could still send a login notification. `CreateSession` started
+  the notification goroutine *before* writing the session row, so a failed write
+  produced a notification for a session that never existed. The write now comes
+  first.
+
+- The login response echoed the session token in its JSON body
+  (`data.set-cookie.session_token`), which defeated the HttpOnly cookie: anything
+  able to run JavaScript on the login page could read the credential. Nothing in
+  the frontend consumed that field, so it is gone; the token is delivered only
+  through `Set-Cookie`.
+
+- Theme import and market install wrote to fixed paths in the system temp
+  directory (`downloaded_theme.zip`, `import_theme.zip`). Concurrent installs
+  overwrote each other, and a shared `/tmp` allowed symlink attacks. Both now use
+  `os.CreateTemp`, which also drops the file mode from 0644 to 0600.
+
+### Added
+
+- A `prerelease` release channel, so unreleased changes can be installed and
+  upgraded on a real machine without cutting a version. Pushing to the
+  `prerelease` branch builds the five Linux targets and publishes them to a
+  rolling release tagged `prerelease`, marked as a prerelease so
+  `releases/latest` keeps pointing at the stable version. The install script
+  gained a third channel option that downloads from it, and probes the asset
+  first so a not-yet-built prerelease reports "no prerelease build is available
+  yet" instead of the generic network error.
+
+  The snapshot channel now skips the `prerelease` tag when picking the newest
+  release; otherwise both channels would resolve to the same build.
+
+### Internal
+
+- The security fixes were verified against a real server, not only in unit
+  tests. An 8 MiB login body returned 400; a 3 MiB `/api/rpc2` body returned
+  413; a 200 MiB gzip bomb (204 KB compressed) returned 400 in 8 ms — fast
+  enough to show the read stops at the limit rather than after decompressing;
+  a 100-item batch was rejected while a 20-item batch succeeded; and a 200 KiB
+  WebSocket frame dropped the connection while a 32 KiB frame went through.
+
+- Still open from the same review, deliberately out of scope here: login and
+  2FA rate limiting, hashing agent tokens and sessions at rest, constant-time
+  comparison for API keys, `SetTrustedProxies`, and a CSP. This release raises
+  the floor; it does not close the list.
+
 ## v0.1.22 - 2026-09-27
 
 ### Added
