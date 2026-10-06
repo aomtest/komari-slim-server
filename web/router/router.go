@@ -97,6 +97,9 @@ func registerAdminRoutes(r *gin.Engine) {
 		selfUpdate.GET("/status", admin.SelfUpdateStatus)
 		selfUpdate.POST("/apply", admin.RequireSameOriginFetch(), admin.ApplySelfUpdate)
 		selfUpdate.POST("/rollback", admin.RequireSameOriginFetch(), admin.RollbackSelfUpdate)
+		// 触发选中的 agent 去更新自己。面板只发一个共享令牌，
+		// 不传任何指令或二进制，同样需要自定义 header 防 CSRF。
+		selfUpdate.POST("/agent", admin.RequireSameOriginFetch(), admin.TriggerAgentUpdate)
 	}
 
 	// theme 的安装流程通过统一的分片上传接口；其余主题接口保留 REST handler。

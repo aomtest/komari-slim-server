@@ -18,6 +18,13 @@ type Settings struct {
 	SendIpAddrToGuest      bool   `json:"send_ip_addr_to_guest" default:"false"`               // 是否向访客页面发送 IP 地址，默认 false
 	VisitorAuditEnabled    bool   `json:"visitor_audit_enabled" default:"false"`               // 是否允许公开访客事件写入审计日志，默认 false
 	SSRFProtectionEnabled  bool   `json:"ssrf_protection_enabled" default:"true"`              // 是否启用 SSRF 防护，默认开启
+	// Agent 自更新触发。令牌留空则整个功能禁用(面板侧不会发起任何连接)。
+	//
+	// 这个令牌必须与 agent 侧 --update-token 配置的值一致。它只用于向 agent 的
+	// 触发端口发一个固定字符串,不承载任何指令 —— agent 收到后只会「更新自己」,
+	// 不接受任何参数。
+	AgentUpdateToken string `json:"agent_update_token" default:""`  // 触发 agent 自更新的共享令牌
+	AgentUpdatePort  int    `json:"agent_update_port" default:"25775"` // agent 侧触发端口,默认 25775
 	EulaAccepted           bool   `json:"eula_accepted" default:"false"`
 	BaseScriptsURLKey      string `json:"base_scripts_url" default:""`
 	// GeoIP 配置
@@ -57,6 +64,8 @@ const (
 	SendIpAddrToGuestKey      = "send_ip_addr_to_guest"
 	VisitorAuditEnabledKey    = "visitor_audit_enabled"
 	SSRFProtectionEnabledKey  = "ssrf_protection_enabled"
+	AgentUpdateTokenKey       = "agent_update_token"
+	AgentUpdatePortKey        = "agent_update_port"
 	EulaAcceptedKey           = "eula_accepted"
 	BaseScriptsURLKey         = "base_scripts_url"
 	GeoIpEnabledKey           = "geo_ip_enabled"
