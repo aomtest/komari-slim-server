@@ -40,6 +40,18 @@ func getV2EventQueueLocked(uuid string) *v2EventQueue {
 	return q
 }
 
+// DropV2EventQueue 回收 uuid 的事件队列。
+//
+// 队列在首次取用时就会由 getV2EventQueueLocked 创建,而此前全文件没有任何
+// 删除路径 —— 每个调用过 TakeV2Events / WaitV2Events / EnqueueV2Event 的 uuid
+// 都会在 map 里永久留下一个条目。单个条目不大,但"创建后删除客户端"这种
+// 反复操作会让它只增不减。
+func DropV2EventQueue(uuid string) {
+	v2EventMu.Lock()
+	defer v2EventMu.Unlock()
+	delete(v2EventQueues, uuid)
+}
+
 func DispatchV2Event(uuid, method string, params any) bool {
 	if conn := GetConnectedClients()[uuid]; conn != nil {
 		payload := v2.Request{JSONRPC: v2.Version, Method: method, Params: params}
@@ -196,7 +208,13 @@ func TakeV2Events(uuid string, ackIDs []string, limit int) []v2.Event {
 	q := getV2EventQueueLocked(uuid)
 	ackV2EventsLocked(q, ackIDs)
 	pruneExpiredV2EventsLocked(q)
-	return takeV2EventsLocked(q, limit)
+	events := takeV2EventsLocked(q, limit)
+	// 取空即回收,避免离线客户端的空队列长期占位。
+	// WaitV2Events 超时后也会走到这里,所以反复长轮询是"创建-回收"循环,不会累积。
+	if len(q.events) == 0 {
+		delete(v2EventQueues, uuid)
+	}
+	return events
 }
 
 func AckV2Events(uuid string, ackIDs []string) {

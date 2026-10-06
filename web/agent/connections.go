@@ -54,22 +54,48 @@ func IsV2Client(uuid string) bool {
 	return ok
 }
 
-func DeleteClientConditionally(uuid string, connToRemove *connection.SafeConn) {
+// ClearV2Client 移除 uuid 的 v2 客户端标记。
+//
+// 非 WebSocket(POST 上报)的 agent 走 KeepAlivePresence + MarkV2Client 这条路,
+// 但过期时原先只清 presenceOnly、不清 v2Clients。而 IsAgentOnline 的第二个
+// 判据正是 IsV2Client(uuid),于是 agent 只要用 POST 上线过一次,就永久被判为
+// 在线:离线事件不再触发,DispatchV2Event 里 `if !IsV2Client(uuid)` 那道门也
+// 形同虚设,命令会被入队并在 agent 重连后延迟执行。
+//
+// 调用方必须已经通过 generation 校验确认这是"当前这一代"的过期,否则会把
+// 刚重连上来的新标记一起清掉。
+func ClearV2Client(uuid string) {
 	mu.Lock()
 	defer mu.Unlock()
+	delete(v2Clients, uuid)
+}
+
+func DeleteClientConditionally(uuid string, connToRemove *connection.SafeConn) {
+	mu.Lock()
 
 	// 检查当前 map 里的 conn 是否就是要删除的这一个
+	removed := false
 	if currentConn, exists := connectedClients[uuid]; exists && currentConn == connToRemove {
 		delete(connectedClients, uuid)
 		delete(v2Clients, uuid)
+		removed = true
+	}
+	mu.Unlock()
+
+	if removed {
+		// 事件队列由 v2EventMu 保护,放在 mu 之外调用以免形成锁嵌套。
+		DropV2EventQueue(uuid)
 	}
 }
+
 func DeleteConnectedClients(uuid string) {
 	mu.Lock()
-	defer mu.Unlock()
 	// 只从 map 中删除，不再负责关闭连接
 	delete(connectedClients, uuid)
 	delete(v2Clients, uuid)
+	mu.Unlock()
+
+	DropV2EventQueue(uuid)
 }
 
 // SetPresence sets or clears presence for non-WebSocket agents.

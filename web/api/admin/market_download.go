@@ -201,8 +201,11 @@ func ssrfProtectionEnabled() (bool, error) {
 	if !errors.Is(err, gorm.ErrRecordNotFound) {
 		return false, err
 	}
-	if err := config.Set(config.SSRFProtectionEnabledKey, false); err != nil {
+	// 配置项缺失时写入默认值。默认值与 Settings.SSRFProtectionEnabled 的
+	// default tag 必须保持一致，否则「首次运行」和「已有配置」两条路径会
+	// 得到相反的结论。
+	if err := config.Set(config.SSRFProtectionEnabledKey, true); err != nil {
 		return false, err
 	}
-	return false, nil
+	return true, nil
 }
