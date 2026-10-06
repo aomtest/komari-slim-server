@@ -85,6 +85,20 @@ func registerAdminRoutes(r *gin.Engine) {
 	g.PUT("/update/favicon", admin.UploadFavicon)
 	g.POST("/update/favicon", admin.DeleteFavicon)
 
+	// 自更新。这条路径独立于上面的 /update/*（那些是"更新 GeoIP 库 / 用户 / 图标"），
+	// 避免语义混淆。
+	//
+	// apply 和 rollback 会替换服务端二进制并重启服务，属于本项目的最高危操作，
+	// 因此在管理员鉴权之外再要求自定义 header（见 RequireSameOriginFetch 的说明）。
+	selfUpdate := g.Group("/self-update")
+	{
+		selfUpdate.GET("/check", admin.CheckSelfUpdate)
+		selfUpdate.GET("/events", admin.SelfUpdateEvents)
+		selfUpdate.GET("/status", admin.SelfUpdateStatus)
+		selfUpdate.POST("/apply", admin.RequireSameOriginFetch(), admin.ApplySelfUpdate)
+		selfUpdate.POST("/rollback", admin.RequireSameOriginFetch(), admin.RollbackSelfUpdate)
+	}
+
 	// theme 的安装流程通过统一的分片上传接口；其余主题接口保留 REST handler。
 	theme := g.Group("/theme")
 	{
