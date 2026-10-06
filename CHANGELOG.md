@@ -10,6 +10,20 @@ them — they only ever produce a compare link. So entries are written by hand.
 The release workflow extracts the section matching the pushed tag and uses it as
 the release body. A tag without a matching section fails the release on purpose.
 
+## v0.1.30 - 2026-10-07
+
+### Added
+
+- **Settings UI for the agent update token.** v0.1.28 introduced
+  `agent_update_token` / `agent_update_port`, and v0.1.29 added a checkbox in
+  the install-command builders that uses them — but there was nowhere to
+  actually set the token, so that checkbox appeared disabled while pointing at a
+  setting that had no interface. The general settings page now has a card for
+  both fields, with a generate button for the token (matching the
+  auto-discovery key card next to it).
+
+  The token may be left empty; that is how the feature is turned off.
+
 ## v0.1.29 - 2026-10-07
 
 ### Fixed
