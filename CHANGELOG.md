@@ -10,6 +10,20 @@ them — they only ever produce a compare link. So entries are written by hand.
 The release workflow extracts the section matching the pushed tag and uses it as
 the release body. A tag without a matching section fails the release on purpose.
 
+## v0.1.29 - 2026-10-07
+
+### Fixed
+
+- The "Enable remote update trigger" checkbox from v0.1.28 only appeared in the
+  node table's install dialog. The admin page actually has **three** separate
+  install-command builders, and the two reached from the main page — the
+  auto-discovery section and the node detail page — did not offer it, so the
+  option was effectively invisible in normal use.
+
+  All three now include it.
+
+Nothing else changed: the panel's behaviour is otherwise identical to v0.1.28.
+
 ## v0.1.28 - 2026-10-07
 
 ### Added
