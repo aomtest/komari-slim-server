@@ -41,15 +41,6 @@ func binaryPath() (string, error) {
 	return resolved, nil
 }
 
-// binaryPathOrEmpty 是 binaryPath 的不报错版本,用于构造路径的辅助函数。
-func binaryPathOrEmpty() string {
-	p, err := binaryPath()
-	if err != nil {
-		return ""
-	}
-	return p
-}
-
 // isDocker 检测是否运行在容器里。
 //
 // 容器内替换二进制会随容器重建而丢失,所以本功能在容器里直接拒绝,
@@ -129,11 +120,19 @@ func checkUpdatePreconditions() (bool, string) {
 	if err := checkDirWritable(dir); err != nil {
 		return false, fmt.Sprintf("the binary directory %s is not writable: %v", dir, err)
 	}
-	if err := checkDirWritable(backupDir()); err != nil {
-		// 备份目录写不了就不能更新 —— 没有备份的替换是不安全的。
-		if mkErr := os.MkdirAll(backupDir(), 0o755); mkErr != nil {
-			return false, fmt.Sprintf("the backup directory %s is not writable: %v", backupDir(), err)
-		}
+
+	// 备份目录必须可用 —— 没有备份的替换是不安全的。
+	backupDirPath, err := backupDir()
+	if err != nil {
+		return false, err.Error()
+	}
+	if err := os.MkdirAll(backupDirPath, 0o755); err != nil {
+		return false, fmt.Sprintf("cannot create the backup directory %s: %v", backupDirPath, err)
+	}
+	// MkdirAll 成功不代表目录可写:目录可能早就存在、只是权限不对。
+	// 必须再实测一次,否则会在"备份"这一步才失败 —— 那时二进制已经被 rename 走了。
+	if err := checkDirWritable(backupDirPath); err != nil {
+		return false, fmt.Sprintf("the backup directory %s is not writable: %v", backupDirPath, err)
 	}
 	return true, ""
 }
@@ -158,8 +157,12 @@ func hasUsableBackup() bool {
 }
 
 // listBackups 返回按时间倒序排列的备份文件路径。
+// 备份目录不可用时返回空 —— 调用方按"没有备份"处理。
 func listBackups() []string {
-	dir := backupDir()
+	dir, err := backupDir()
+	if err != nil {
+		return nil
+	}
 	entries, err := os.ReadDir(dir)
 	if err != nil {
 		return nil
@@ -181,8 +184,11 @@ func listBackups() []string {
 // 用 rename 而不是 copy:copy 会留下一个"原文件还在、副本也在"的中间状态,
 // 而 rename 之后原路径立刻空出来,下一步可以原子地把新文件放上去。
 // 进程在二进制被 rename 走后仍能继续运行 —— inode 还在内存里。
-func backupBinary(binaryPath string) (string, error) {
-	dir := backupDir()
+func backupBinary(currentBinary string) (string, error) {
+	dir, err := backupDir()
+	if err != nil {
+		return "", err
+	}
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return "", fmt.Errorf("cannot create the backup directory: %w", err)
 	}
@@ -191,7 +197,7 @@ func backupBinary(binaryPath string) (string, error) {
 		time.Now().Format("20060102-150405"))
 	target := filepath.Join(dir, name)
 
-	if err := os.Rename(binaryPath, target); err != nil {
+	if err := os.Rename(currentBinary, target); err != nil {
 		return "", fmt.Errorf("failed to move the current binary to %s: %w", target, err)
 	}
 	return target, nil

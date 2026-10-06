@@ -10,6 +10,30 @@ them — they only ever produce a compare link. So entries are written by hand.
 The release workflow extracts the section matching the pushed tag and uses it as
 the release body. A tag without a matching section fails the release on purpose.
 
+## v0.1.27 - 2026-10-07
+
+### Fixed
+
+- The backup-directory check could pass on a directory that was not actually
+  writable. `checkDirWritable` was called first and, on failure, `MkdirAll` was
+  attempted — but a successful `MkdirAll` only proves the directory now exists,
+  not that it can be written to (a pre-existing directory with the wrong mode
+  returns success). It now creates the directory first and then verifies
+  writability for real. This mattered because the failure would otherwise
+  surface at the backup step, *after* the current binary had already been
+  renamed away.
+
+- `backupDir()` derived its path from a helper that returned an empty string on
+  error, so a failure produced the relative path `backup/`. That happened to
+  land in the right place only because the service runs with
+  `WorkingDirectory=/opt/komari` — a coincidence, not a design. It now returns
+  an error when the binary path cannot be determined, and callers treat that as
+  "no backup available".
+
+### Removed
+
+- `binaryPathOrEmpty`, unused after the above.
+
 ## v0.1.26 - 2026-10-07
 
 ### Added

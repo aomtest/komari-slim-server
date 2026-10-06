@@ -386,6 +386,14 @@ func parseVersion(v string) []int {
 }
 
 // backupDir 返回备份目录。固定值,不可由请求指定。
-func backupDir() string {
-	return filepath.Join(filepath.Dir(binaryPathOrEmpty()), "backup")
+//
+// 必须和二进制在同一目录树内 —— 替换用的是 rename,跨文件系统会失败。
+// 所以这里以二进制路径为准,而不是工作目录。拿不到二进制路径就返回错误,
+// 不能退化成相对路径(那样会碰巧因为 WorkingDirectory 而"看起来能用")。
+func backupDir() (string, error) {
+	p, err := binaryPath()
+	if err != nil {
+		return "", fmt.Errorf("cannot determine the backup directory: %w", err)
+	}
+	return filepath.Join(filepath.Dir(p), "backup"), nil
 }
