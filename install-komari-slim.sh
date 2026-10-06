@@ -589,6 +589,14 @@ msg() {
             en_text='The agent update failed. See the output above.'
             zh_text='Agent 更新失败，请查看上方输出。'
             ;;
+        agent_only_title)
+            en_text='komari-slim agent management'
+            zh_text='komari-slim Agent 管理'
+            ;;
+        agent_only_prompt)
+            en_text='No panel is installed on this machine, but an agent was found. Choose an action:'
+            zh_text='本机未安装面板，但检测到 agent。请选择操作：'
+            ;;
         main_exit)
             en_text='Exit'
             zh_text='退出'
@@ -1567,9 +1575,49 @@ stop_service() {
 
 
 # Main menu
+# 本机只装了 agent、没装面板时的菜单。
+#
+# 为什么需要它:main_menu 原本在「未装面板」时直接跳进面板安装流程,于是只跑 agent
+# 的机器 —— 恰恰是最需要更新 agent 的场景 —— 永远进不了管理菜单,
+# 「更新本机 Agent」对它们等于不存在。
+agent_only_menu() {
+    while true; do
+        local choice
+        if ! choice=$(ui_menu "$(msg agent_only_title)" "$(msg agent_only_prompt)" \
+            "1" "$(msg main_update_agent)" \
+            "2" "$(msg main_install)" \
+            "3" "$(msg main_exit)"); then
+            exit 0
+        fi
+
+        case $choice in
+            1) update_local_agent ;;
+            2)
+                # 装上之后这台机器就有面板了,交给主菜单接着跑。
+                install_binary
+                if is_installed; then
+                    main_menu
+                fi
+                return
+                ;;
+            3) exit 0 ;;
+            *) ui_msgbox "$(msg title_error)" "$(msg invalid_option)" ;;
+        esac
+        progress_reset
+    done
+}
+
 main_menu() {
-    if ! is_installed; then
+    # 面板和 agent 都没有 → 直接进安装流程,保持原有的「一条命令装好」体验。
+    if ! is_installed && ! is_agent_installed; then
         install_binary
+        return
+    fi
+
+    # 有 agent 但没面板 → 走精简菜单。不能直接跳面板安装流程,
+    # 否则这台机器永远进不了管理菜单。
+    if ! is_installed; then
+        agent_only_menu
         return
     fi
 
