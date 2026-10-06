@@ -69,6 +69,11 @@ BACKUP_DIR="$INSTALL_DIR/backup"
 DATA_BACKUP_DIR="$DATA_DIR/data/backup"
 DEFAULT_PORT="25774"
 LISTEN_PORT=""
+# 本机 agent 的位置。由 agent 自己的 install.sh 决定(服务名 komari-agent,
+# 二进制 /opt/komari/agent),这里刻意写死:该功能只用于「更新本机上已经装好的
+# agent」,如果本机没装、或装在别处,直接提示未检测到即可,不需要让用户配置。
+AGENT_SERVICE_NAME="komari-agent"
+AGENT_BINARY_PATH="/opt/komari/agent"
 STANDARD_REPO="aomtest/komari-slim-server"
 REPO="$STANDARD_REPO"
 # 发行版本: standard（标准版）或 lite（Lite 轻量版）
@@ -547,6 +552,42 @@ msg() {
         main_cleanup)
             en_text='Clean upgrade backups'
             zh_text='清理升级历史备份'
+            ;;
+        main_update_agent)
+            en_text='Update the local Agent'
+            zh_text='更新本机 Agent'
+            ;;
+        agent_checking)
+            en_text='Checking for a komari agent on this machine...'
+            zh_text='正在检查本机 Agent...'
+            ;;
+        agent_not_installed)
+            en_text='No komari agent was found on this machine.'
+            zh_text='本机未检测到 komari agent。'
+            ;;
+        agent_update_start)
+            en_text='Updating the local agent...'
+            zh_text='正在更新本机 Agent...'
+            ;;
+        agent_args_found)
+            en_text='Reusing the existing launch arguments: %s'
+            zh_text='复用现有启动参数：%s'
+            ;;
+        agent_args_missing)
+            en_text='No launch arguments were found in the service configuration; updating without them.'
+            zh_text='未能从服务配置中读到启动参数，将不带参数更新。'
+            ;;
+        agent_download_failed)
+            en_text='Failed to download the agent installer. Nothing was changed.'
+            zh_text='下载 Agent 安装脚本失败，未做任何改动。'
+            ;;
+        agent_update_done)
+            en_text='The local agent has been updated.'
+            zh_text='本机 Agent 已更新。'
+            ;;
+        agent_update_failed)
+            en_text='The agent update failed. See the output above.'
+            zh_text='Agent 更新失败，请查看上方输出。'
             ;;
         main_exit)
             en_text='Exit'
@@ -1256,6 +1297,82 @@ cleanup_backups() {
     ui_msgbox "$(msg title_cleanup_complete)" "$(msg cleanup_complete "${BINARY_PATH}.backup.*" "$BACKUP_DIR" "$DATA_BACKUP_DIR")"
 }
 
+# 本机是否装了 agent。二进制或服务任一存在即视为已装。
+is_agent_installed() {
+    if [ -f "$AGENT_BINARY_PATH" ]; then
+        return 0
+    fi
+    systemctl list-unit-files 2>/dev/null | grep -q "^${AGENT_SERVICE_NAME}\.service"
+}
+
+# 更新本机上已经装好的 agent。
+#
+# 为什么不要求用户去面板复制安装命令:那条命令里的 -e / -t 是透传给 agent 二进制的
+# 启动参数,首次安装时用来写 systemd unit 的 ExecStart;升级时这些已经在 unit 里了,
+# 从这里读出来原样传回去即可,用户不需要再提供一次。
+#
+# 为什么复用 agent 自己的 install.sh,而不是在这里重新实现替换:那套 SHA256 校验、
+# 镜像回退、「下载失败不动系统状态」的逻辑刚在 agent 侧写好,在这里再写一遍会走样,
+# 将来两边还会各自漂移。
+update_local_agent() {
+    progress_reset
+
+    if ! check_systemd; then
+        ui_msgbox "$(msg title_error)" "$(msg systemd_required)"
+        return 1
+    fi
+
+    log_step "$(msg agent_checking)"
+    if ! is_agent_installed; then
+        ui_msgbox "$(msg title_notice)" "$(msg agent_not_installed)"
+        return 0
+    fi
+
+    # 从现有 unit 的 ExecStart 里取出 agent 的启动参数。
+    # 形如 ExecStart=/opt/komari/agent -e https://panel -t xxxx,
+    # 去掉可执行文件路径,剩下的就是当初装的时候传进去的参数。
+    local agent_args
+    agent_args=$(systemctl cat "${AGENT_SERVICE_NAME}.service" 2>/dev/null \
+        | sed -n 's/^ExecStart=[^[:space:]]*[[:space:]]*//p' | head -1)
+
+    if [ -n "$agent_args" ]; then
+        log_info "$(msg agent_args_found "$agent_args")"
+    else
+        log_warning "$(msg agent_args_missing)"
+    fi
+
+    log_step "$(msg agent_update_start)"
+
+    # 先把安装脚本下到临时文件,而不是直接 curl | bash:
+    # 管道里 curl 失败时 bash 只会读到空输入并以 0 退出,失败会被吞掉。
+    local agent_installer
+    agent_installer=$(mktemp "${TMPDIR:-/tmp}/komari-agent-install.XXXXXX.sh") || {
+        ui_msgbox "$(msg title_error)" "$(msg agent_download_failed)"
+        return 1
+    }
+
+    if ! curl -fsSL --connect-timeout 15 --max-time 60 \
+        -o "$agent_installer" \
+        "https://raw.githubusercontent.com/aomtest/komari-slim-agent/main/install.sh"; then
+        rm -f "$agent_installer"
+        ui_msgbox "$(msg title_error)" "$(msg agent_download_failed)"
+        return 1
+    fi
+
+    # agent_args 刻意不加引号:它本身就是空格分隔的多个参数,需要分词后原样传下去。
+    local rc
+    bash "$agent_installer" $agent_args
+    rc=$?
+    rm -f "$agent_installer"
+
+    if [ "$rc" -eq 0 ]; then
+        ui_msgbox "$(msg title_success)" "$(msg agent_update_done)"
+    else
+        ui_msgbox "$(msg title_error)" "$(msg agent_update_failed)"
+        return 1
+    fi
+}
+
 # Upgrade function
 upgrade_komari() {
     progress_reset
@@ -1462,12 +1579,13 @@ main_menu() {
             "1" "$(msg main_install)" \
             "2" "$(msg main_upgrade)" \
             "3" "$(msg main_uninstall)" \
-            "4" "$(msg main_status)" \
-            "5" "$(msg main_logs)" \
-            "6" "$(msg main_restart)" \
-            "7" "$(msg main_stop)" \
-            "8" "$(msg main_cleanup)" \
-            "9" "$(msg main_exit)"); then
+            "4" "$(msg main_update_agent)" \
+            "5" "$(msg main_status)" \
+            "6" "$(msg main_logs)" \
+            "7" "$(msg main_restart)" \
+            "8" "$(msg main_stop)" \
+            "9" "$(msg main_cleanup)" \
+            "10" "$(msg main_exit)"); then
             exit 0
         fi
 
@@ -1475,12 +1593,13 @@ main_menu() {
             1) install_binary ;;
             2) upgrade_komari ;;
             3) uninstall_komari ;;
-            4) show_status ;;
-            5) show_logs ;;
-            6) restart_service ;;
-            7) stop_service ;;
-            8) cleanup_backups ;;
-            9) exit 0 ;;
+            4) update_local_agent ;;
+            5) show_status ;;
+            6) show_logs ;;
+            7) restart_service ;;
+            8) stop_service ;;
+            9) cleanup_backups ;;
+            10) exit 0 ;;
             *) ui_msgbox "$(msg title_error)" "$(msg invalid_option)" ;;
         esac
         progress_reset
