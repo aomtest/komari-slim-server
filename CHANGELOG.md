@@ -10,6 +10,40 @@ them — they only ever produce a compare link. So entries are written by hand.
 The release workflow extracts the section matching the pushed tag and uses it as
 the release body. A tag without a matching section fails the release on purpose.
 
+## v0.1.26 - 2026-10-07
+
+### Added
+
+- **Self-update from the admin panel.** The server can now check for, download
+  and install a new release without SSH. Five endpoints under
+  `/api/admin/self-update/`, surfaced as a card on the About page. Full design
+  and rationale in `docs/panel-self-update.md`.
+
+  Scope is deliberately narrow: **Linux, systemd, and a writable binary
+  directory**. Windows, containers and non-systemd installs are refused with an
+  explicit reason rather than silently degrading. Snapshot and prerelease builds
+  are refused too — they come from branches and are newer than any release, so
+  "updating" them would actually be a downgrade; switching channels belongs in
+  the install script.
+
+  How it works: download to a temp file next to the binary, verify the SHA-256
+  against the digest GitHub reports for that asset, rename the current binary
+  aside as a backup, rename the new file into place, then restart via systemd.
+  A failure at any step restores the backup. `apply` and `rollback` additionally
+  require an `X-Requested-With` header, which a cross-site request cannot set.
+
+  Two limits worth stating plainly:
+
+  - The checksum proves the download was not altered in transit. It does **not**
+    authenticate the publisher — this project does not sign its releases. A
+    compromised repository could replace both the binary and its digest.
+  - An asset without a digest is refused rather than installed unverified.
+
+### Notes
+
+- Upgrading **to** this version still requires the install script or a manual
+  update; the panel cannot update a build that predates the feature.
+
 ## v0.1.25 - 2026-10-06
 
 ### Changed
