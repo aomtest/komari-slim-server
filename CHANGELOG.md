@@ -10,6 +10,59 @@ them — they only ever produce a compare link. So entries are written by hand.
 The release workflow extracts the section matching the pushed tag and uses it as
 the release body. A tag without a matching section fails the release on purpose.
 
+## v0.1.25 - 2026-10-06
+
+### Changed
+
+- SSRF protection for market downloads now defaults to **on**. It was off, which
+  meant the default transport did no address filtering at all —
+  `validateMarketDownloadURL` only checks the scheme, so a market source
+  pointing at a loopback, private or link-local address (including cloud
+  metadata endpoints) was fetched without complaint. New installs get the
+  protection; existing installs keep whatever value is already stored, so a
+  source that resolves to a private address must be re-pointed or the setting
+  turned back off deliberately.
+
+### Fixed
+
+- `/api/me` returned the client token where it should return the client UUID.
+  The guard was inverted — `GetClientUUIDByToken` returns `(uuid, nil)` on
+  success and `("", err)` on failure, but the assignment was guarded by
+  `err != nil`, so the success path kept the token and the failure path wrote an
+  empty string. It now assigns only on success, which also avoids leaving a
+  credential in a field that means "UUID" when the lookup fails.
+
+- A POST-reporting agent was considered online forever. `postPresenceExpired`
+  cleared `presenceOnly` but not `v2Clients`, while `IsAgentOnline`'s second
+  check is exactly `IsV2Client(uuid)`. Once an agent had reported via POST it
+  stayed "online" permanently: offline notifications never fired, and the
+  `if !IsV2Client(uuid)` guard in `DispatchV2Event` was a no-op, so commands
+  queued up and ran late after a reconnect. **Operators relying on offline
+  notifications should expect them to start firing where they previously did
+  not.**
+
+- The cleanup that follows a presence expiry could delete a freshly reconnected
+  agent's state. The generation check guarded only the removal of the presence
+  entry, and the lock was released before the derived state was cleaned up, so
+  an agent reconnecting inside that window would re-register and then have that
+  new registration deleted — a just-connected agent reported as offline. The
+  whole cleanup now runs inside the critical section.
+
+- `v2EventQueues` entries were never reclaimed. `getV2EventQueueLocked` creates
+  an entry on first use and there was no delete path anywhere in the file, so
+  every uuid that had ever taken, waited on or enqueued an event left a
+  permanent entry. Queues are now dropped when they drain — including through
+  acknowledgement and the non-blocking wait path — and when a client is removed
+  or expires.
+
+### Internal
+
+- `ClearV2Client` and `DropV2EventQueue` are called together with the presence
+  removal inside a single critical section. The two maps are guarded by separate
+  mutexes and are never held nested.
+- Tests cover the stale-generation case, acknowledgement-driven queue
+  reclamation, and the non-blocking wait path.
+
 ## v0.1.24 - 2026-10-06
 
 ### Fixed
