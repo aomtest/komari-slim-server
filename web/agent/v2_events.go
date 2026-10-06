@@ -229,6 +229,9 @@ func AckV2Events(uuid string, ackIDs []string) {
 		return
 	}
 	ackV2EventsLocked(q, ackIDs)
+	if len(q.events) == 0 {
+		delete(v2EventQueues, uuid)
+	}
 }
 
 func takeV2EventsLocked(q *v2EventQueue, limit int) []v2.Event {
@@ -247,6 +250,9 @@ func WaitV2Events(uuid string, ackIDs []string, timeout time.Duration) []v2.Even
 	pruneExpiredV2EventsLocked(q)
 	events := takeV2EventsLocked(q, v2EventQueueLimit)
 	if len(events) > 0 || timeout <= 0 {
+		if len(q.events) == 0 && timeout <= 0 {
+			delete(v2EventQueues, uuid)
+		}
 		v2EventMu.Unlock()
 		return events
 	}

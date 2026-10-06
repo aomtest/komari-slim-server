@@ -56,18 +56,17 @@ func refreshPostPresence(uuid string) {
 
 func postPresenceExpired(uuid string, connID int64, gen uint64) {
 	postPresenceMu.Lock()
+	defer postPresenceMu.Unlock()
+
 	e, ok := postPresenceStates[uuid]
 	if !ok || e.connID != connID || e.generation != gen {
-		postPresenceMu.Unlock()
 		return
 	}
 	delete(postPresenceStates, uuid)
-	postPresenceMu.Unlock()
 
 	agent_runtime.SetPresence(uuid, connID, false)
-	// 上面已通过 generation 校验确认这是"当前这一代"的过期(agent 重连会让
-	// generation 自增,旧定时器到这里会直接 return),因此可以安全地一并清掉
-	// v2 标记与事件队列。不清 v2 标记的话 IsAgentOnline 会永久返回 true。
+	// 保持 postPresenceMu 直到所有清理完成,避免新一代 POST presence 在这里
+	// 删除状态后、清理 v2 标记和事件队列前插入。
 	agent_runtime.ClearV2Client(uuid)
 	agent_runtime.DropV2EventQueue(uuid)
 	notifier.OfflineNotification(uuid, connID)

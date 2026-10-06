@@ -459,7 +459,6 @@ func getMe(ctx context.Context, _ *rpc.JsonRpcRequest) (any, *rpc.JsonRpcError) 
 		// UUID 必须是客户端 UUID，不是 token。原先写成 `if err != nil`，
 		// 而 GetClientUUIDByToken 成功时返回 (uuid, nil)、失败时返回 ("", err)，
 		// 于是成功路径留下的是 token、失败路径反而赋了空字符串 —— 两个分支都错。
-		resp.UUID = meta.ClientToken
 		if clientUUID, err := clients.GetClientUUIDByToken(meta.ClientToken); err == nil {
 			resp.UUID = clientUUID
 		}
