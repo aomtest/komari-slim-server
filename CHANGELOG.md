@@ -10,6 +10,39 @@ them — they only ever produce a compare link. So entries are written by hand.
 The release workflow extracts the section matching the pushed tag and uses it as
 the release body. A tag without a matching section fails the release on purpose.
 
+## v0.1.28 - 2026-10-07
+
+### Added
+
+- **Trigger an agent self-update from the panel.** Selecting nodes in the node
+  table reveals an "Update agents" action; the panel then sends a shared token
+  to each agent's trigger port. It sends no instructions, no parameters and no
+  binary — the agent fetches the latest release from GitHub itself, and only
+  after verifying its SHA-256. So the most this can be made to do is make an
+  agent update to the latest version.
+
+  This pairs with the new `--update-listen` / `--update-token` flags on the
+  agent. Both sides must share the same token: configure it under
+  `agent_update_token`, and optionally `agent_update_port` (default 25775).
+
+  The install command builder now has a checkbox that appends both flags, so a
+  freshly installed agent already accepts triggers.
+
+  Three things worth knowing:
+
+  - **The panel must be able to reach the agent's trigger port.** Agents behind
+    NAT cannot be triggered this way. The error message says so explicitly
+    rather than reporting a bare connection failure.
+  - **An empty token disables the feature.** The endpoint refuses rather than
+    sending an empty string.
+  - **The trigger port only compares tokens** and drops everything else without
+    responding, so it presents nothing useful to a scanner.
+
+### Notes
+
+- The agent side requires its own release (v1.0.4 or later) for the new flags
+  to exist. Older agents will simply not listen on the port.
+
 ## v0.1.27 - 2026-10-07
 
 ### Fixed
