@@ -10,6 +10,20 @@ them — they only ever produce a compare link. So entries are written by hand.
 The release workflow extracts the section matching the pushed tag and uses it as
 the release body. A tag without a matching section fails the release on purpose.
 
+## v0.1.31 - 2026-10-07
+
+### Fixed
+
+- **The "Update agents" button never appeared.** The admin page defines its own
+  node table inside `pages/admin/index.tsx`, but the button had been added to
+  `components/admin/NodeTable.tsx` — a component that nothing references. That
+  whole directory turns out to be an island: its files only reference each
+  other.
+
+  The button now lives in the table that actually renders. It appears in the
+  toolbar as soon as at least one node is selected, and stays disabled until an
+  agent update token is configured in the settings.
+
 ## v0.1.30 - 2026-10-07
 
 ### Added
