@@ -426,8 +426,6 @@ func getMe(ctx context.Context, _ *rpc.JsonRpcRequest) (any, *rpc.JsonRpcError) 
 	var resp struct {
 		TwoFAEnabled bool   `json:"2fa_enabled"`
 		LoggedIn     bool   `json:"logged_in"`
-		SSOId        string `json:"sso_id"`
-		SSOType      string `json:"sso_type"`
 		Username     string `json:"username"`
 		UUID         string `json:"uuid"`
 	}
@@ -443,8 +441,6 @@ func getMe(ctx context.Context, _ *rpc.JsonRpcRequest) (any, *rpc.JsonRpcError) 
 		}
 		resp.TwoFAEnabled = meta.User.TwoFactor != ""
 		resp.LoggedIn = true
-		resp.SSOId = meta.User.SSOID
-		resp.SSOType = meta.User.SSOType
 		resp.Username = meta.User.Username
 		resp.UUID = meta.User.UUID
 		return resp, nil
@@ -453,8 +449,6 @@ func getMe(ctx context.Context, _ *rpc.JsonRpcRequest) (any, *rpc.JsonRpcError) 
 		return resp, nil
 	case rpc.PrincipalAgent:
 		resp.LoggedIn = true
-		resp.SSOId = "client"
-		resp.SSOType = "client"
 		resp.Username = "client"
 		// UUID 必须是客户端 UUID，不是 token。原先写成 `if err != nil`，
 		// 而 GetClientUUIDByToken 成功时返回 (uuid, nil)、失败时返回 ("", err)，

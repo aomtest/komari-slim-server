@@ -12,7 +12,7 @@ import (
 )
 
 // admin.provider.go
-// 消息发送器与 OIDC 提供者配置 RPC2 方法（admin 命名空间）。
+// 消息发送器配置 RPC2 方法（admin 命名空间）。
 
 func init() {
 	reg("getMessageSenderProvider", adminGetMessageSender, "Get message sender provider config or templates")

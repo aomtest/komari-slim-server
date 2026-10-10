@@ -152,39 +152,7 @@ func GetUserByUUID(uuid string) (user models.User, err error) {
 	return user, nil
 }
 
-// 通过 SSO 信息获取用户
-func GetUserBySSO(ssoID string) (user models.User, err error) {
-	db := dbcore.GetDBInstance()
-
-	// 首先尝试查找已存在的用户
-	err = db.Where("sso_id = ?", ssoID).First(&user).Error
-	if err == nil {
-		return user, nil
-	}
-
-	// 如果找不到用户，返回明确的错误信息
-	return models.User{}, fmt.Errorf("用户不存在：%s", ssoID)
-}
-
-func BindingExternalAccount(uuid string, sso_id string) error {
-	db := dbcore.GetDBInstance()
-	err := db.Model(&models.User{}).Where("uuid = ?", uuid).Update("sso_id", sso_id).Error
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func UnbindExternalAccount(uuid string) error {
-	db := dbcore.GetDBInstance()
-	err := db.Model(&models.User{}).Where("uuid = ?", uuid).Update("sso_id", "").Error
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func UpdateUser(uuid string, name, password, sso_type *string) error {
+func UpdateUser(uuid string, name, password *string) error {
 	db := dbcore.GetDBInstance()
 	// Check if user exists
 	var existingUser models.User
@@ -202,9 +170,6 @@ func UpdateUser(uuid string, name, password, sso_type *string) error {
 			return err
 		}
 		updates["passwd"] = hashedPassword
-	}
-	if sso_type != nil {
-		updates["sso_type"] = *sso_type
 	}
 	updates["updated_at"] = time.Now().UTC()
 	err := db.Model(&models.User{}).Where("uuid = ?", uuid).Updates(updates).Error

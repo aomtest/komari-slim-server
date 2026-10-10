@@ -24,8 +24,3 @@ func GetScheme(c *gin.Context) string {
 	return "http"
 }
 
-func GetCallbackURL(c *gin.Context) string {
-	scheme := GetScheme(c)
-	host := c.Request.Host
-	return scheme + "://" + host + "/api/oauth_callback"
-}

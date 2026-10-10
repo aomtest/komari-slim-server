@@ -22,7 +22,6 @@ func UpdateUser(c *gin.Context) {
 		Uuid     string  `json:"uuid" binding:"required"`
 		Name     *string `json:"username"`
 		Password *string `json:"password"`
-		SsoType  *string `json:"sso_type"`
 		TwoFa    string  `json:"2fa_code"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -48,7 +47,7 @@ func UpdateUser(c *gin.Context) {
 			return
 		}
 	}
-	if err := accounts.UpdateUser(req.Uuid, req.Name, req.Password, req.SsoType); err != nil {
+	if err := accounts.UpdateUser(req.Uuid, req.Name, req.Password); err != nil {
 		api.RespondError(c, 500, "Failed to update user: "+err.Error())
 		return
 	}

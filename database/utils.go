@@ -42,9 +42,6 @@ func GetPublicInfo() (map[string]interface{}, error) {
 	if !hasKey("theme") {
 		cst.Theme = "default"
 	}
-	if !hasKey("o_auth_provider") {
-		cst.OAuthProvider = "github"
-	}
 
 	// Fallback defaults if we couldn't enumerate keys.
 	if allErr != nil {
@@ -90,8 +87,6 @@ func GetPublicInfo() (map[string]interface{}, error) {
 		"description":               cst.Description,
 		"custom_head":               cst.CustomHead,
 		"custom_body":               cst.CustomBody,
-		"oauth_enable":              cst.OAuthEnabled,
-		"oauth_provider":            cst.OAuthProvider,
 		"disable_password_login":    cst.DisablePasswordLogin,
 		"cors_origin_check_enabled": cst.CorsOriginCheckEnabled,
 		"record_enabled":            retention.AllPositive, // 兼容旧版本主题
