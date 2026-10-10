@@ -11,6 +11,10 @@ __debug*
 
 # local development data
 komari.db
+komari.db-shm
+komari.db-wal
+*.db-shm
+*.db-wal
 /data
 /utils/geoip/data
 .vscode/
