@@ -87,7 +87,10 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v7
         with:
-          go-version: '1.27'
+          # 钉死补丁版本：发布产物必须包含 CVE-2026-111943 的修复
+          # （crypto/x509 拒绝已泄露的 eMudhra 中间证书），以及 1.27.2
+          # 带来的 15 项 net/http / crypto/tls / html/template 等修复。
+          go-version: '1.27.3'
           # 必须显式指定依赖文件位置：server 被检出到 server/ 子目录，
           # 而 setup-go 默认在**仓库根目录**找 go.sum，找不到就报
           # "Dependencies file is not found ... Supported file pattern: go.sum"

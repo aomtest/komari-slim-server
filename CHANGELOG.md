@@ -10,6 +10,25 @@ them — they only ever produce a compare link. So entries are written by hand.
 The release workflow extracts the section matching the pushed tag and uses it as
 the release body. A tag without a matching section fails the release on purpose.
 
+## v0.1.32 - 2026-10-22
+
+### Changed
+
+- **Upgraded the Go toolchain to 1.27.3.** Builds now carry the standard
+  library fixes released after 1.27.1. The one that prompted this release is
+  CVE-2026-111943: Go's `crypto/x509` performs no revocation checking, so it
+  kept trusting intermediate CA certificates whose private keys had been
+  compromised (eight eMudhra intermediates, two of them for code signing).
+  1.27.3 adds a hashed denylist in `Certificate.Verify`, with no opt-out.
+
+  The 1.27.2 batch is included as well — HTTP/2 header-table and Trailer
+  memory exhaustion, HTTP/1 CONNECT desynchronisation, the ECH extension
+  memory amplification, and two `html/template` escaping issues.
+
+  No application code changed. Go links the standard library statically, so
+  these fixes only reach users through a rebuild, which is what this release
+  is.
+
 ## v0.1.31 - 2026-10-07
 
 ### Fixed
