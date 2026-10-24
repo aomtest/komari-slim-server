@@ -79,7 +79,7 @@ REPO="$STANDARD_REPO"
 # 发行版本: standard（标准版）或 lite（Lite 轻量版）
 EDITION="standard"
 EDITION_NAME=""
-# 发布通道: stable（稳定版）或 snapshot（快照版）；Lite 仅支持 stable
+# 发布通道: stable（正式版）或 prerelease（预发布版）；Lite 仅支持 stable
 CHANNEL="stable"
 CHANNEL_NAME=""
 # 语言: en（English）或 zh（简体中文）
@@ -192,21 +192,13 @@ msg() {
             en_text='Stable release (recommended)'
             zh_text='正式版（推荐）'
             ;;
-        channel_snapshot)
-            en_text='Snapshot release (latest changes)'
-            zh_text='快照版（最新功能）'
-            ;;
         channel_prerelease)
-            en_text='Prerelease build (from the prerelease branch, for testing)'
-            zh_text='预发布版（prerelease 分支构建，供实机测试）'
+            en_text='Prerelease build (latest improvements and features, but less stable)'
+            zh_text='预发布版（最新改进和功能，但存在更多不稳定性）'
             ;;
         channel_name_stable)
             en_text='stable'
             zh_text='正式版'
-            ;;
-        channel_name_snapshot)
-            en_text='snapshot'
-            zh_text='快照版'
             ;;
         channel_name_prerelease)
             en_text='prerelease'
@@ -315,18 +307,6 @@ msg() {
         download_progress)
             en_text='Downloading %s %3s%% [%s%s] %s / %s'
             zh_text='正在下载 %s %3s%% [%s%s] %s / %s'
-            ;;
-        fetch_snapshot)
-            en_text='Fetching the latest snapshot release...'
-            zh_text='正在获取最新快照版本...'
-            ;;
-        snapshot_not_found)
-            en_text='No snapshot release was found.'
-            zh_text='未找到快照版本。'
-            ;;
-        snapshot_found)
-            en_text='Latest snapshot: %s'
-            zh_text='最新快照版本：%s'
             ;;
         fetch_prerelease)
             en_text='Checking the latest prerelease build...'
@@ -824,25 +804,19 @@ select_language() {
     done
 }
 
-# 显示 ASCII 横幅。
+# 显示标题。
+# 原来是一段手绘 ASCII art（用 ('-') / (OO) 之类字符拼的），字符密度太低，
+# 实际终端里根本认不出 "komari" 这几个字，反而像乱码。
+# 换成一条分隔线 + 一行标题，任何字体、任何终端宽度下都能读。
 show_banner() {
+    local title="komari-slim  ·  lightweight server monitor"
+    local rule="=================================================="
     if [ "$COLOR_ENABLED" -eq 1 ]; then
-        printf '%b' "$CYAN"
-    fi
-    while IFS= read -r line; do
-        printf '%s\n' "$line"
-    done <<'ASCII_ART'
-<-.(`-')            <-. (`-')   (`-')  _    (`-')   _
- __( OO)      .->      \(OO )_  (OO ).-/ <-.(OO )  (_)
-'-'. ,--.(`-')----. ,--./  ,-.) / ,---.  ,------,) ,-(`-')
-|  .'   /( OO).-.  '|   `.'   | | \ /`.\ |   /`. ' | ( OO)
-|      /)( _) | |  ||  |'.'|  | '-'|_.' ||  |_.' | |  |  )
-|  .   '  \|  |)|  ||  |   |  |(|  .-.  ||  .   .'(|  |_/
-|  |\   \  '  '-'  '|  |   |  | |  | |  ||  |\  \  |  |'->
-    `--' '--'   `-----' `--'   `--' `--' `--'`--' '--' `--'
-ASCII_ART
-    if [ "$COLOR_ENABLED" -eq 1 ]; then
-        printf '%b' "$NC"
+        printf '\n%b%s%b\n' "$BOLD$CYAN" "$rule" "$NC"
+        printf '%b  %s%b\n' "$BOLD$CYAN" "$title" "$NC"
+        printf '%b%s%b\n\n' "$BOLD$CYAN" "$rule" "$NC"
+    else
+        printf '\n%s\n  %s\n%s\n\n' "$rule" "$title" "$rule"
     fi
     show_progress
 }
@@ -862,19 +836,17 @@ select_edition() {
 select_channel() {
     local choice
 
+    # 快照通道已取消：它和预发布通道实际上指向同一批构建
+    # （快照查询要显式排除滚动 prerelease，留下的"最新快照"其实还是同一份代码），
+    # 两条入口只会让用户困惑，所以只保留正式版与预发布版。
     choice=$(ui_menu "$(msg channel_title)" "$(msg channel_prompt)" \
         "1" "$(msg channel_stable)" \
-        "2" "$(msg channel_snapshot)" \
-        "3" "$(msg channel_prerelease)")
+        "2" "$(msg channel_prerelease)")
 
     case "$choice" in
-        prerelease|3)
+        prerelease|2)
             CHANNEL="prerelease"
             CHANNEL_NAME="$(msg channel_name_prerelease)"
-            ;;
-        snapshot|2)
-            CHANNEL="snapshot"
-            CHANNEL_NAME="$(msg channel_name_snapshot)"
             ;;
         stable|1|"")
             CHANNEL="stable"
@@ -985,24 +957,6 @@ get_download_url() {
             return 1
         fi
         echo "$url"
-    elif [ "$CHANNEL" = "snapshot" ]; then
-        # 获取最新的预发布版本（不再限定 Snapshot- 前缀）
-        log_info "$(msg fetch_snapshot)" >&2
-        # 排除滚动 prerelease release：它的 tag 也叫 prerelease，不排除的话
-        # 快照通道会和预发布通道下载到同一个构建。
-        local latest_snapshot=$(curl -s "https://api.github.com/repos/${REPO}/releases" \
-            | grep '"tag_name"' \
-            | sed -e 's/.*"tag_name": *"//' -e 's/".*//' \
-            | grep -v '^prerelease$' \
-            | head -1)
-
-        if [ -z "$latest_snapshot" ]; then
-            log_error "$(msg snapshot_not_found)" >&2
-            return 1
-        fi
-
-        log_info "$(msg snapshot_found "$latest_snapshot")" >&2
-        echo "https://github.com/${REPO}/releases/download/${latest_snapshot}/${file_name}"
     else
         # 稳定版：使用 latest
         echo "https://github.com/${REPO}/releases/latest/download/${file_name}"
